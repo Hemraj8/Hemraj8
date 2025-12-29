@@ -1,5 +1,5 @@
 # About Me:
-I engineer systems designed for speed, logic, and real-time response. My work sits at the intersection of Cloud Architecture, Autonomous Systems, and AI, focusing on turning high-pressure data into actionable results.<br><br>What Drives Me<br>☁️ Cloud Systems: Building the secure, low-latency infrastructure that powers modern applications.<br><br>🤖 Autonomous Intelligence: Specialized in vision-based navigation and real-time decision-making logic.<br><br>🧠 Edge AI: Optimizing complex models to think and act on local hardware without a safety net
+I engineer systems designed for speed, logic, and real-time response. My work sits at the intersection of Cloud Architecture, Autonomous Systems, and AI, focusing on turning high-pressure data into actionable results.<br><br>What Drives Me: <br><br>☁️ Cloud Systems: Building the secure, low-latency infrastructure that powers modern applications.<br><br>🤖 Autonomous Intelligence: Specialized in vision-based navigation and real-time decision-making logic.<br><br>🧠 Edge AI: Optimizing complex models to think and act on local hardware without a safety net
 
 
 ## 🌐 Socials:
@@ -12,10 +12,6 @@ I engineer systems designed for speed, logic, and real-time response. My work si
 ![](https://nirzak-streak-stats.vercel.app/?user=Hemraj8&theme=merko&hide_border=false)<br/>
 ![](https://github-readme-stats.vercel.app/api/top-langs/?username=Hemraj8&theme=merko&hide_border=false&include_all_commits=true&count_private=true&layout=compact)
 
-## 🏆 GitHub Trophies
-![](https://github-profile-trophy.vercel.app/?username=Hemraj8&theme=radical&no-frame=false&no-bg=false&margin-w=4)
 
----
-[![](https://visitcount.itsvg.in/api?id=Hemraj8&icon=0&color=0)](https://visitcount.itsvg.in)
 
 <!-- Proudly created with GPRM ( https://gprm.itsvg.in ) -->
