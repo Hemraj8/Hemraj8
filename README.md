@@ -9,7 +9,6 @@ Engineering real-time systems. Edge + Cloud. Built under constraints.
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://linkedin.com/in/www.linkedin.com/in/hemraj-sodisetti) [![email](https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white)](mailto:hemrajsodisetti@gmail.com) 
 
-# 📊 GitHub Stats:
 
 <table border="0">
   <tr>
