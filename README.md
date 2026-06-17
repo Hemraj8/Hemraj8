@@ -1,5 +1,5 @@
 # Hem Raj Sodisetti
-Engineering real-time systems. Edge + Cloud. Built under constraints.
+Orchestrating chaos into infrastructure. Edge-to-cloud execution, zero tolerance for mediocrity.
 
 
 
