@@ -1,5 +1,5 @@
 # Hem Raj Sodisetti
-Orchestrating chaos into infrastructure. Edge-to-cloud execution, zero tolerance for mediocrity.
+Orchestrating chaos into infrastructure. Edge-to-cloud execution, zero tolerance for mediocrity..
 
 
 
