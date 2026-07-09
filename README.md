@@ -13,7 +13,7 @@ Orchestrating chaos into infrastructure. Edge-to-cloud execution, zero tolerance
 <table border="0">
   <tr>
     <td align="center" valign="top">
-      <img src="https://nirzak-streak-stats.vercel.app/?user=Hemraj8&theme=merko&hide_border=false" alt="Streak Stats" width="400"/>
+      <img src="https://streak-stats.demolab.com?user=Hemraj8&theme=merko&hide_border=false" width="400"/>
     </td>
     <td align="center" valign="top">
       <img src="https://github-readme-stats-eight-theta.vercel.app/api/top-langs/?username=Hemraj8&theme=merko&layout=compact&include_all_commits=true" alt="Top Languages" width="350"/>
