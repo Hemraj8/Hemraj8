@@ -160,8 +160,10 @@ FRAMES = [
 ]
 FRAMES = [[l.replace("\\\\", "\\") for l in f] for f in FRAMES]
 
-def cracker(x, y, t0, color, fs=15):
+def cracker(x, y, t0, color, fs=15, loop=True):
+    """Burst at (x,y). loop=True replays every 8s cycle; loop=False plays once."""
     dt = 0.22
+    repeat = 'repeatCount="indefinite"' if loop else 'repeatCount="1" fill="freeze"'
     out = []
     for i, frame in enumerate(FRAMES):
         t1, t2 = t0 + i * dt, t0 + (i + 1) * dt
@@ -172,27 +174,34 @@ def cracker(x, y, t0, color, fs=15):
             f'<text font-size="{fs}" fill="{color}" opacity="0">{lines}'
             f'<animate attributeName="opacity" values="0;0;1;1;0;0" '
             f'keyTimes="0;{t1/8:.4f};{(t1+0.01)/8:.4f};{(t2-0.01)/8:.4f};{t2/8:.4f};1" '
-            f'dur="8s" repeatCount="1" fill="freeze"/></text>'
+            f'dur="8s" {repeat}/></text>'
         )
     return "".join(out)
 
-# bursts sit on the four corners of the portrait, then one in its center
+# bursts keep firing on the four corners of the portrait, every 8s;
+# the center burst plays once, right before the portrait reveals
 CRACKERS = (
     cracker(24, 52, 0.15, "#ffd166")
     + cracker(330, 52, 0.55, "#ff7b72")
     + cracker(24, 360, 0.95, "#79c0ff")
     + cracker(330, 360, 1.35, "#d2a8ff")
-    + cracker(160, 200, 1.70, "#ffd166", fs=17)   # center burst right before reveal
+    + cracker(160, 200, 1.70, "#ffd166", fs=17, loop=False)
 )
 
-# tiny perpetual sparkles hugging the portrait's corners after the intro
-SPARK_POS = [(8, 34, "#ffd166"), (388, 34, "#ff7b72"), (8, 396, "#79c0ff"),
-             (388, 396, "#d2a8ff"), (195, 22, "#ffd166"), (195, 404, "#79c0ff")]
+# sparkles twinkling over the whole portrait after the intro
+SPARK_POS = [
+    (8, 34, "*", "#ffd166"), (388, 34, "*", "#ff7b72"), (8, 396, "*", "#79c0ff"),
+    (388, 396, "*", "#d2a8ff"), (195, 22, "*", "#ffd166"), (195, 404, "*", "#79c0ff"),
+    (60, 120, "+", "#f0f3f6"), (300, 90, "*", "#ffd166"), (140, 70, "+", "#79c0ff"),
+    (250, 160, "*", "#d2a8ff"), (90, 250, "+", "#ff7b72"), (330, 230, "*", "#f0f3f6"),
+    (180, 310, "+", "#ffd166"), (280, 350, "*", "#79c0ff"), (45, 330, "+", "#d2a8ff"),
+    (350, 140, "+", "#ff7b72"),
+]
 SPARKS = "".join(
-    f'<text x="{x}" y="{y}" font-size="13" fill="{c}" opacity="0">*'
-    f'<animate attributeName="opacity" values="0;0.9;0" dur="{1.6 + i * 0.4:.1f}s" '
-    f'begin="{3 + i * 0.5:.1f}s" repeatCount="indefinite"/></text>'
-    for i, (x, y, c) in enumerate(SPARK_POS)
+    f'<text x="{x}" y="{y}" font-size="{12 + (i % 3)}" fill="{c}" opacity="0">{ch}'
+    f'<animate attributeName="opacity" values="0;0.9;0" dur="{1.3 + (i % 5) * 0.45:.2f}s" '
+    f'begin="{2.8 + i * 0.33:.2f}s" repeatCount="indefinite"/></text>'
+    for i, (x, y, ch, c) in enumerate(SPARK_POS)
 )
 
 # ---------- 5. assemble ----------
@@ -244,7 +253,13 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
 <rect width="{W}" height="{H}" fill="#0d1117" rx="15"/>
 {CRACKERS}
 {SPARKS}
+<!-- portrait shivers briefly every few seconds -->
+<g>
+<animateTransform attributeName="transform" type="translate" begin="{T_ART + 1.5:.1f}s"
+  values="0 0;2 -1.5;-2 1.5;1.5 2;-1.5 -2;1 1;0 0;0 0"
+  keyTimes="0;0.02;0.04;0.06;0.08;0.1;0.12;1" dur="4s" repeatCount="indefinite"/>
 {"".join(art_svg)}
+</g>
 {"".join(panel_svg)}
 </svg>
 '''
