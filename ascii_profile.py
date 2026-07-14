@@ -178,14 +178,46 @@ def cracker(x, y, t0, color, fs=15, loop=True):
         )
     return "".join(out)
 
-# bursts keep firing on the four corners of the portrait, every 8s;
-# the center burst plays once, right before the portrait reveals
+# intro: one burst at each corner of the portrait, then one in its center
 CRACKERS = (
-    cracker(24, 52, 0.15, "#ffd166")
-    + cracker(330, 52, 0.55, "#ff7b72")
-    + cracker(24, 360, 0.95, "#79c0ff")
-    + cracker(330, 360, 1.35, "#d2a8ff")
+    cracker(24, 52, 0.15, "#ffd166", loop=False)
+    + cracker(330, 52, 0.55, "#ff7b72", loop=False)
+    + cracker(24, 360, 0.95, "#79c0ff", loop=False)
+    + cracker(330, 360, 1.35, "#d2a8ff", loop=False)
     + cracker(160, 200, 1.70, "#ffd166", fs=17, loop=False)
+)
+
+# after the intro, a sketchy burst doodle lives at each corner, constantly
+# "boiling" — flipping between jittered hand-drawn variants + tiny shake
+BOIL_VARIANTS = [
+    ["\\ | /", "- * -", "/ | \\"],
+    [" \\|/ ", "- o -", " /|\\ "],
+    ["\\ ' /", "- * -", "/ , \\"],
+]
+
+def sketch(x, y, color, t0=2.5, fs=13):
+    parts = [f'<g opacity="0"><animate attributeName="opacity" begin="{t0}s" dur="0.4s" from="0" to="0.9" fill="freeze"/>'
+             f'<animateTransform attributeName="transform" type="translate" '
+             f'values="0 0;1 -1;-1 1;1 1;0 0" dur="0.45s" begin="{t0}s" repeatCount="indefinite"/>']
+    n = len(BOIL_VARIANTS)
+    for i, frame in enumerate(BOIL_VARIANTS):
+        lines = "".join(f'<tspan x="{x}" y="{y + j * fs}">{escape(l)}</tspan>' for j, l in enumerate(frame))
+        k0 = 0.002 + i / n * 0.99
+        k1 = 0.002 + (i + 1) / n * 0.99
+        parts.append(
+            f'<text font-size="{fs}" fill="{color}" opacity="0">{lines}'
+            f'<animate attributeName="opacity" values="0;1;1;0;0" '
+            f'keyTimes="0;{k0:.3f};{k1 - 0.002:.3f};{k1:.3f};1" '
+            f'dur="0.42s" begin="{t0}s" repeatCount="indefinite"/></text>'
+        )
+    parts.append("</g>")
+    return "".join(parts)
+
+CRACKERS += (
+    sketch(20, 48, "#ffd166")
+    + sketch(330, 48, "#ff7b72")
+    + sketch(20, 362, "#79c0ff")
+    + sketch(330, 362, "#d2a8ff")
 )
 
 # sparkles twinkling over the whole portrait after the intro
