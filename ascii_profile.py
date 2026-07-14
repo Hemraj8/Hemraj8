@@ -8,8 +8,53 @@ Pure SMIL — renders inside GitHub's README <img> sandbox.
 Regenerate:  sips -z 30 60 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
+import json
+import os
 import struct
+import urllib.request
+from calendar import monthrange
+from datetime import datetime, timezone
 from html import escape
+
+USER = "Hemraj8"
+
+# ---------- 0. live GitHub stats (falls back to last-known values offline) ----------
+def gh(url):
+    req = urllib.request.Request(url, headers={"User-Agent": USER})
+    tok = os.environ.get("GITHUB_TOKEN")
+    if tok:
+        req.add_header("Authorization", f"Bearer {tok}")
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.load(r)
+
+def fetch_stats():
+    u = gh(f"https://api.github.com/users/{USER}")
+    repos = gh(f"https://api.github.com/users/{USER}/repos?per_page=100")
+    joined = datetime.fromisoformat(u["created_at"].replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    y, m, d = now.year - joined.year, now.month - joined.month, now.day - joined.day
+    if d < 0:
+        m -= 1
+        py, pm = (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)
+        d += monthrange(py, pm)[1]
+    if m < 0:
+        y, m = y - 1, m + 12
+    uptime = f"{y} years, {m} months, {d} days" if m else f"{y} years, {d} days"
+    return {
+        "uptime": uptime,
+        "repos": u["public_repos"],
+        "stars": sum(r["stargazers_count"] for r in repos),
+        "followers": u["followers"],
+        "joined": joined.strftime("%B %Y"),
+    }
+
+try:
+    STATS = fetch_stats()
+    print("stats:", STATS)
+except Exception as e:
+    print(f"stats fetch failed ({e}), using fallbacks")
+    STATS = {"uptime": "3 years, 18 days", "repos": 14, "stars": 3,
+             "followers": 1, "joined": "June 2023"}
 
 # ---------- 1. read the 60x30 BMP produced by sips ----------
 data = open("small.bmp", "rb").read()
@@ -87,7 +132,7 @@ def header(label):
 PANEL = [
     header("hemraj@sodisetti"),
     kv("OS", "macOS, Linux"),
-    kv("Uptime.GitHub", "3 years, 18 days"),
+    kv("Uptime.GitHub", STATS["uptime"]),
     kv("Host", "Edge-to-Cloud Infrastructure"),
     kv("Kernel", "Systems + ML"),
     kv("IDE", "VS Code, Claude Code"),
@@ -102,8 +147,8 @@ PANEL = [
     kv("GitHub", "github.com/Hemraj8"),
     '<tspan class="cc">. </tspan>',
     header("- GitHub Stats"),
-    kv("Repos", "14 | Stars: 3"),
-    kv("Followers", "1 | Joined: June 2023"),
+    kv("Repos", f"{STATS['repos']} | Stars: {STATS['stars']}"),
+    kv("Followers", f"{STATS['followers']} | Joined: {STATS['joined']}"),
 ]
 
 # ---------- 4. ASCII crackers (corner fireworks) ----------
