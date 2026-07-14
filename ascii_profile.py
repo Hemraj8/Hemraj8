@@ -88,10 +88,8 @@ def classify(px):
     ch = RAMP[min(int(v * len(RAMP)), len(RAMP) - 1)]
     if ch == " ":
         return " ", None
-    if r > 80 and r > 1.5 * g:                       # red-dominant pixel
-        cls = "r2" if v > 0.55 else "r1"
-    else:
-        cls = "g2" if v > 0.55 else "g1"
+    # monochrome: three gray bands by brightness
+    cls = "g3" if v > 0.7 else ("g2" if v > 0.4 else "g1")
     return ch, cls
 
 art_lines = []                 # each line: list of (class, run_of_chars)
@@ -239,10 +237,9 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   .value {{ fill: #79c0ff; }}
   .cc {{ fill: #4d5566; }}
   .hdr {{ fill: #e6edf3; font-weight: bold; }}
-  .r2 {{ fill: #ff5c50; }}
-  .r1 {{ fill: #a83a34; }}
-  .g2 {{ fill: #c9d1d9; }}
-  .g1 {{ fill: #7d8590; }}
+  .g3 {{ fill: #f0f3f6; }}
+  .g2 {{ fill: #aab4bf; }}
+  .g1 {{ fill: #5c6570; }}
 </style>
 <rect width="{W}" height="{H}" fill="#0d1117" rx="15"/>
 {CRACKERS}
