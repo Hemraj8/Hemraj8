@@ -109,11 +109,13 @@ for row in rows:
 # ---------- 3. layout ----------
 W, H = 985, 415
 ART_X, ART_Y0, ART_LH, ART_FS = 18, 40, 12, 10.5   # top-aligned with the info panel
+ART_W = 368                                         # pixel width of the portrait
 COL_X, COL_Y0, LH = 400, 30, 20
 PANEL_CHARS = 60                                    # chars per info line
 
-T_ART = 2.0        # portrait starts typing after the corner crackers
-T_INFO = 2.6       # info panel starts
+REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
+REVEAL_DUR = 2.6   # ...and takes this long to sweep left-to-right
+T_INFO = 2.4       # info panel starts
 
 def dots(key, value, extra=0):
     n = PANEL_CHARS - len(key) - len(value) - 4 - extra
@@ -149,75 +151,32 @@ PANEL = [
     kv("Followers", f"{STATS['followers']} | Joined: {STATS['joined']}"),
 ]
 
-# ---------- 4. ASCII crackers (corner fireworks) ----------
-# frames of a burst, drawn with text; each frame shows briefly in sequence
-FRAMES = [
-    ["", "  |", ""],
-    ["", "  *", ""],
-    [r" \|/", " -o-", r" /|\\"],
-    [r"\ ' /", "- * -", r"/ . \\"],
-    ["'   `", "  .  ", ",   ."],
-]
-FRAMES = [[l.replace("\\\\", "\\") for l in f] for f in FRAMES]
+# ---------- 4. sketch-draw reveal with a colorful crackling edge ----------
+# The portrait is revealed by a clip window that widens left-to-right, as if
+# being sketched in. A column of colorful crackling sparks rides the pen edge.
+EDGE_COLORS = ["#ffd166", "#ff7b72", "#79c0ff", "#d2a8ff", "#56d364", "#f0f3f6"]
+EDGE_CHARS = ["*", "+", "'", "*", ".", "+"]
 
-def cracker(x, y, t0, color, fs=15, loop=True):
-    """Burst at (x,y). loop=True replays every 8s cycle; loop=False plays once."""
-    dt = 0.22
-    repeat = 'repeatCount="indefinite"' if loop else 'repeatCount="1" fill="freeze"'
-    out = []
-    for i, frame in enumerate(FRAMES):
-        t1, t2 = t0 + i * dt, t0 + (i + 1) * dt
-        lines = "".join(
-            f'<tspan x="{x}" y="{y + j * fs}">{escape(l)}</tspan>' for j, l in enumerate(frame) if l.strip()
-        )
-        out.append(
-            f'<text font-size="{fs}" fill="{color}" opacity="0">{lines}'
-            f'<animate attributeName="opacity" values="0;0;1;1;0;0" '
-            f'keyTimes="0;{t1/8:.4f};{(t1+0.01)/8:.4f};{(t2-0.01)/8:.4f};{t2/8:.4f};1" '
-            f'dur="8s" {repeat}/></text>'
-        )
-    return "".join(out)
+edge_bits = []
+for i in range(14):
+    y = 34 + i * 27
+    c = EDGE_COLORS[i % len(EDGE_COLORS)]
+    ch = EDGE_CHARS[i % len(EDGE_CHARS)]
+    xoff = (-6, 2, -2, 6, 0)[i % 5]                  # ragged edge, not a straight line
+    blink = 0.10 + (i % 4) * 0.04
+    edge_bits.append(
+        f'<text x="{xoff}" y="{y}" font-size="{11 + i % 6}" fill="{c}">{ch}'
+        f'<animate attributeName="opacity" values="1;0.15;1" dur="{blink:.2f}s" repeatCount="indefinite"/></text>'
+    )
 
-# intro: one burst at each corner of the portrait, then one in its center
-CRACKERS = (
-    cracker(24, 52, 0.15, "#ffd166", loop=False)
-    + cracker(330, 52, 0.55, "#ff7b72", loop=False)
-    + cracker(24, 360, 0.95, "#79c0ff", loop=False)
-    + cracker(330, 360, 1.35, "#d2a8ff", loop=False)
-    + cracker(160, 200, 1.70, "#ffd166", fs=17, loop=False)
-)
-
-# after the intro, a sketchy burst doodle lives at each corner, constantly
-# "boiling" — flipping between jittered hand-drawn variants + tiny shake
-BOIL_VARIANTS = [
-    ["\\ | /", "- * -", "/ | \\"],
-    [" \\|/ ", "- o -", " /|\\ "],
-    ["\\ ' /", "- * -", "/ , \\"],
-]
-
-def sketch(x, y, color, t0=2.5, fs=13):
-    parts = [f'<g opacity="0"><animate attributeName="opacity" begin="{t0}s" dur="0.4s" from="0" to="0.9" fill="freeze"/>'
-             f'<animateTransform attributeName="transform" type="translate" '
-             f'values="0 0;1 -1;-1 1;1 1;0 0" dur="0.45s" begin="{t0}s" repeatCount="indefinite"/>']
-    n = len(BOIL_VARIANTS)
-    for i, frame in enumerate(BOIL_VARIANTS):
-        lines = "".join(f'<tspan x="{x}" y="{y + j * fs}">{escape(l)}</tspan>' for j, l in enumerate(frame))
-        k0 = 0.002 + i / n * 0.99
-        k1 = 0.002 + (i + 1) / n * 0.99
-        parts.append(
-            f'<text font-size="{fs}" fill="{color}" opacity="0">{lines}'
-            f'<animate attributeName="opacity" values="0;1;1;0;0" '
-            f'keyTimes="0;{k0:.3f};{k1 - 0.002:.3f};{k1:.3f};1" '
-            f'dur="0.42s" begin="{t0}s" repeatCount="indefinite"/></text>'
-        )
-    parts.append("</g>")
-    return "".join(parts)
-
-CRACKERS += (
-    sketch(20, 48, "#ffd166")
-    + sketch(330, 48, "#ff7b72")
-    + sketch(20, 362, "#79c0ff")
-    + sketch(330, 362, "#d2a8ff")
+SPARKLER = (
+    f'<g opacity="0">'
+    f'<animate attributeName="opacity" values="0;0;1;1;0" '
+    f'keyTimes="0;{REVEAL_T0/(REVEAL_T0+REVEAL_DUR+0.3):.3f};{(REVEAL_T0+0.15)/(REVEAL_T0+REVEAL_DUR+0.3):.3f};0.92;1" '
+    f'dur="{REVEAL_T0+REVEAL_DUR+0.3:.1f}s" fill="freeze"/>'
+    f'<animateTransform attributeName="transform" type="translate" '
+    f'from="{ART_X} 0" to="{ART_X + ART_W + 8} 0" begin="{REVEAL_T0}s" dur="{REVEAL_DUR}s" fill="freeze"/>'
+    + "".join(edge_bits) + "</g>"
 )
 
 # sparkles twinkling over the whole portrait after the intro
@@ -241,24 +200,22 @@ SPARKS = "".join(
 # identical in every renderer regardless of which monospace font loads
 import re as _re
 
-ART_W = 368          # pixel width of the 60-char portrait lines
 CHAR_W = 9.3         # panel: px per character (60 chars ~ 558px)
 
 def plain_len(svg_fragment):
     return len(_re.sub(r"<[^>]+>", "", svg_fragment)
                .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"))
 
+# portrait lines are fully drawn; the animated clip window reveals them
 art_svg = []
 for i, runs in enumerate(art_lines):
     spans = "".join(
         f'<tspan class="{cls}">{escape(txt)}</tspan>' if cls else f"<tspan>{escape(txt)}</tspan>"
         for cls, txt in runs
     )
-    t = T_ART + i * 0.045
     art_svg.append(
         f'<text x="{ART_X}" y="{ART_Y0 + i * ART_LH}" font-size="{ART_FS}" '
-        f'textLength="{ART_W}" lengthAdjust="spacingAndGlyphs" opacity="0">{spans}'
-        f'<animate attributeName="opacity" begin="{t:.2f}s" dur="0.25s" from="0" to="1" fill="freeze"/></text>'
+        f'textLength="{ART_W}" lengthAdjust="spacingAndGlyphs">{spans}</text>'
     )
 
 panel_svg = []
@@ -283,15 +240,19 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   .g1 {{ fill: #5c6570; }}
 </style>
 <rect width="{W}" height="{H}" fill="#0d1117" rx="15"/>
-{CRACKERS}
-{SPARKS}
-<!-- portrait shivers briefly every few seconds -->
-<g>
-<animateTransform attributeName="transform" type="translate" begin="{T_ART + 1.5:.1f}s"
-  values="0 0;2 -1.5;-2 1.5;1.5 2;-1.5 -2;1 1;0 0;0 0"
-  keyTimes="0;0.02;0.04;0.06;0.08;0.1;0.12;1" dur="4s" repeatCount="indefinite"/>
+<defs>
+  <clipPath id="reveal">
+    <rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{30 * ART_LH + 24}">
+      <animate attributeName="width" from="0" to="{ART_W + 12}"
+        begin="{REVEAL_T0}s" dur="{REVEAL_DUR}s" fill="freeze"/>
+    </rect>
+  </clipPath>
+</defs>
+<g clip-path="url(#reveal)">
 {"".join(art_svg)}
 </g>
+{SPARKLER}
+{SPARKS}
 {"".join(panel_svg)}
 </svg>
 '''
