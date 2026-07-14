@@ -179,21 +179,7 @@ SPARKLER = (
     + "".join(edge_bits) + "</g>"
 )
 
-# sparkles twinkling over the whole portrait after the intro
-SPARK_POS = [
-    (8, 34, "*", "#ffd166"), (388, 34, "*", "#ff7b72"), (8, 396, "*", "#79c0ff"),
-    (388, 396, "*", "#d2a8ff"), (195, 22, "*", "#ffd166"), (195, 404, "*", "#79c0ff"),
-    (60, 120, "+", "#f0f3f6"), (300, 90, "*", "#ffd166"), (140, 70, "+", "#79c0ff"),
-    (250, 160, "*", "#d2a8ff"), (90, 250, "+", "#ff7b72"), (330, 230, "*", "#f0f3f6"),
-    (180, 310, "+", "#ffd166"), (280, 350, "*", "#79c0ff"), (45, 330, "+", "#d2a8ff"),
-    (350, 140, "+", "#ff7b72"),
-]
-SPARKS = "".join(
-    f'<text x="{x}" y="{y}" font-size="{12 + (i % 3)}" fill="{c}" opacity="0">{ch}'
-    f'<animate attributeName="opacity" values="0;0.9;0" dur="{1.3 + (i % 5) * 0.45:.2f}s" '
-    f'begin="{2.8 + i * 0.33:.2f}s" repeatCount="indefinite"/></text>'
-    for i, (x, y, ch, c) in enumerate(SPARK_POS)
-)
+# no persistent sparkles — the card sits still once the sketch reveal is done
 
 # ---------- 5. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
@@ -252,7 +238,6 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
 {"".join(art_svg)}
 </g>
 {SPARKLER}
-{SPARKS}
 {"".join(panel_svg)}
 </svg>
 '''
