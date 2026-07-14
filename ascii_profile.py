@@ -64,8 +64,8 @@ for row in rows:
     art_lines.append(runs)
 
 # ---------- 3. layout ----------
-W, H = 985, 530
-ART_X, ART_Y0, ART_LH, ART_FS = 18, 92, 12, 10.5   # 60 chars * ~6.3px = ~378px wide
+W, H = 985, 415
+ART_X, ART_Y0, ART_LH, ART_FS = 18, 40, 12, 10.5   # top-aligned with the info panel
 COL_X, COL_Y0, LH = 400, 30, 20
 PANEL_CHARS = 60                                    # chars per info line
 
@@ -133,17 +133,18 @@ def cracker(x, y, t0, color, fs=15):
         )
     return "".join(out)
 
+# bursts sit on the four corners of the portrait, then one in its center
 CRACKERS = (
-    cracker(40, 40, 0.15, "#ffd166")
-    + cracker(880, 45, 0.55, "#ff7b72")
-    + cracker(45, 470, 0.95, "#79c0ff")
-    + cracker(875, 465, 1.35, "#d2a8ff")
-    + cracker(460, 250, 1.70, "#ffd166", fs=17)   # center burst right before reveal
+    cracker(24, 52, 0.15, "#ffd166")
+    + cracker(330, 52, 0.55, "#ff7b72")
+    + cracker(24, 360, 0.95, "#79c0ff")
+    + cracker(330, 360, 1.35, "#d2a8ff")
+    + cracker(160, 200, 1.70, "#ffd166", fs=17)   # center burst right before reveal
 )
 
-# tiny perpetual sparkles near the edges after the intro
-SPARK_POS = [(25, 25, "#ffd166"), (955, 30, "#ff7b72"), (20, 505, "#79c0ff"),
-             (960, 500, "#d2a8ff"), (500, 18, "#ffd166"), (490, 520, "#79c0ff")]
+# tiny perpetual sparkles hugging the portrait's corners after the intro
+SPARK_POS = [(8, 34, "#ffd166"), (388, 34, "#ff7b72"), (8, 396, "#79c0ff"),
+             (388, 396, "#d2a8ff"), (195, 22, "#ffd166"), (195, 404, "#79c0ff")]
 SPARKS = "".join(
     f'<text x="{x}" y="{y}" font-size="13" fill="{c}" opacity="0">*'
     f'<animate attributeName="opacity" values="0;0.9;0" dur="{1.6 + i * 0.4:.1f}s" '
