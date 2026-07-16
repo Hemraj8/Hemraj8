@@ -5,7 +5,7 @@ Sequence: ASCII crackers burst in the corners, then the ASCII portrait
 (converted from avatar.png) types in line by line, then the info panel.
 Pure SMIL — renders inside GitHub's README <img> sandbox.
 
-Regenerate:  sips -z 120 240 avatar.png -s format bmp --out small.bmp
+Regenerate:  sips -z 120 260 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
 import json
@@ -85,30 +85,35 @@ for gy in range(h // DS):
     grid.append(grow)
 rows, h, w = grid, h // DS, w // DS
 
-# ---------- 2. pixels -> donut-math shaded ASCII ----------
-# Shading a la a1k0n's donut: treat the portrait as a 3D surface (brightness
-# = height), compute the surface normal from its gradient, dot it with a
-# fixed light direction, and map the result onto the donut character ramp.
-import math
+# ---------- 2. pixels -> maximal-clarity donut-ramp ASCII ----------
+# The photo already carries real 3D lighting (it was shot in sunlight), so
+# the pipeline focuses on tonal clarity instead of synthetic shading:
+#   1. histogram-equalize the subject's tones -> every ramp character gets
+#      used, so no detail is crushed into one brightness level
+#   2. unsharp mask -> local contrast pop on features (jaw, collar, hairline)
+import bisect
 
 RAMP = ".,-~:;=!*#$@"          # the donut's luminance ramp, dim -> bright
-LIGHT = (-0.45, -0.55, 0.70)   # fixed light from upper-left, in front
 
 def lum(px):
-    return 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
+    return (0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]) / 255
 
-vals = sorted(lum(px) for row in rows for px in row)
-LO, HI = vals[int(len(vals) * 0.05)], vals[int(len(vals) * 0.95)]
+raw = [[lum(px) for px in row] for row in rows]
+MASK = [[raw[y][x] > 0.03 for x in range(w)] for y in range(h)]    # background = space
 
-def value(px):
-    v = (lum(px) - LO) / max(HI - LO, 1)
-    return min(max(v, 0.0), 1.0) ** 0.65     # lifted shadows: sculpted look
+subj = sorted(raw[y][x] for y in range(h) for x in range(w) if MASK[y][x])
+S_LO = subj[int(len(subj) * 0.02)]
+S_HI = subj[int(len(subj) * 0.98)]
 
-vmap = [[value(px) for px in row] for row in rows]
-MASK = [[vmap[y][x] > 0.05 for x in range(w)] for y in range(h)]   # background = space
+def tone(v):
+    """blend of histogram equalization (detail everywhere) and a plain
+    contrast stretch (keeps large areas smooth)"""
+    eq = bisect.bisect_right(subj, v) / len(subj)
+    st = min(max((v - S_LO) / max(S_HI - S_LO, 1e-6), 0.0), 1.0)
+    return 0.6 * eq + 0.4 * st
 
-# blur the height surface before taking normals — small features (lips,
-# moustache) become smooth slopes instead of char noise
+vmap = [[tone(raw[y][x]) if MASK[y][x] else 0.0 for x in range(w)] for y in range(h)]
+
 def blur(m):
     out = []
     for y in range(h):
@@ -125,23 +130,12 @@ def blur(m):
         out.append(row)
     return out
 
-hmap = blur(blur(vmap))     # double blur: small features (moustache, lips)
-                            # become one smooth form, no char noise
-
-def vget(y, x):
-    return hmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
+base = blur(vmap)
 
 def shaded(y, x):
-    """sculpted donut lighting that respects the photo's dark regions:
-    the lighting term is scaled by local tone, so hair/eyes/moustache stay
-    dark and recognizable while lit areas get the full sculpted treatment"""
-    gx = (vget(y, x + 1) - vget(y, x - 1)) * 2.4
-    gy = (vget(y + 1, x) - vget(y - 1, x)) * 2.4
-    nz = 0.45
-    inv = 1.0 / math.sqrt(gx * gx + gy * gy + nz * nz)
-    d = max((-gx * LIGHT[0] - gy * LIGHT[1] + nz * LIGHT[2]) * inv, 0.0)
+    """unsharp mask: v + k*(v - blurred v) — the classic clarity operator"""
     v = vmap[y][x]
-    return min(0.35 * v + 0.80 * d * min(v / 0.45, 1.0), 1.0)
+    return min(max(v + 0.55 * (v - base[y][x]), 0.0), 1.0)
 
 def classify(y, x):
     if not MASK[y][x]:
@@ -196,9 +190,9 @@ W, H = 985, 460
 ART_X, ART_Y0 = 15, 38                              # bigger portrait, top-aligned
 ART_LH = 405 / max(h, 1)                            # line height fills the 405px column
 ART_FS = ART_LH * 0.92
-ART_W = 390                                         # pixel width of the portrait
-COL_X, COL_Y0, LH = 425, 52, 20
-PANEL_CHARS = 58                                    # chars per info line
+ART_W = 441                                         # 405 * source aspect (446/410) — no face squeeze
+COL_X, COL_Y0, LH = 474, 52, 20
+PANEL_CHARS = 53                                    # chars per info line
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.6   # ...and takes this long to sweep left-to-right
