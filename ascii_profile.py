@@ -5,7 +5,7 @@ Sequence: ASCII crackers burst in the corners, then the ASCII portrait
 (converted from avatar.png) types in line by line, then the info panel.
 Pure SMIL — renders inside GitHub's README <img> sandbox.
 
-Regenerate:  sips -z 100 200 avatar.png -s format bmp --out small.bmp
+Regenerate:  sips -z 120 240 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
 import json
@@ -132,14 +132,16 @@ def vget(y, x):
     return hmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
 
 def shaded(y, x):
-    """donut-style sculpted lighting: surface normal . light, with a dash of
-    photo tone so features (moustache, eyes) keep their shape"""
+    """sculpted donut lighting that respects the photo's dark regions:
+    the lighting term is scaled by local tone, so hair/eyes/moustache stay
+    dark and recognizable while lit areas get the full sculpted treatment"""
     gx = (vget(y, x + 1) - vget(y, x - 1)) * 2.4
     gy = (vget(y + 1, x) - vget(y - 1, x)) * 2.4
     nz = 0.45
     inv = 1.0 / math.sqrt(gx * gx + gy * gy + nz * nz)
     d = max((-gx * LIGHT[0] - gy * LIGHT[1] + nz * LIGHT[2]) * inv, 0.0)
-    return min(0.3 * vmap[y][x] + 0.78 * d, 1.0)
+    v = vmap[y][x]
+    return min(0.35 * v + 0.80 * d * min(v / 0.45, 1.0), 1.0)
 
 def classify(y, x):
     if not MASK[y][x]:
