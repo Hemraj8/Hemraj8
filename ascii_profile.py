@@ -111,44 +111,22 @@ def vget(y, x):
     return vmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
 
 def shaded(y, x):
-    """donut-style luminance: surface normal (from height gradient) . light"""
-    gx = (vget(y, x + 1) - vget(y, x - 1)) * 1.8
-    gy = (vget(y + 1, x) - vget(y - 1, x)) * 1.8
-    nz = 0.55
+    """donut-style luminance: surface normal (from height gradient) . light.
+    Nearly pure normal-lighting like the donut — steep normals, little albedo."""
+    gx = (vget(y, x + 1) - vget(y, x - 1)) * 3.0
+    gy = (vget(y + 1, x) - vget(y - 1, x)) * 3.0
+    nz = 0.42
     inv = 1.0 / math.sqrt(gx * gx + gy * gy + nz * nz)
     d = max((-gx * LIGHT[0] - gy * LIGHT[1] + nz * LIGHT[2]) * inv, 0.0)
-    return min(0.35 * vmap[y][x] + 0.75 * d, 1.0)
+    return min(0.12 * vmap[y][x] + 0.95 * d, 1.0)
 
 def classify(y, x):
     if not MASK[y][x]:
         return " ", None, None
     s = shaded(y, x)
     ch = RAMP[min(int(s * len(RAMP)), len(RAMP) - 1)]
-    # full-hue color mapping: each cell gets a hue family + bright/dim band
-    px = rows[y][x]
-    r, g, b = px
-    mx, mn = max(px), min(px)
-    sat = (mx - mn) / mx if mx else 0
-    if sat < 0.18:
-        fam = "g"                                    # washed out -> gray
-    else:
-        if mx == r:
-            hue = (60 * (g - b) / (mx - mn)) % 360
-        elif mx == g:
-            hue = 60 * (b - r) / (mx - mn) + 120
-        else:
-            hue = 60 * (r - g) / (mx - mn) + 240
-        if hue < 70 or hue >= 330:
-            fam = "o"                                # skin / warm tones
-        elif hue < 170:
-            fam = "e"                                # green
-        elif hue < 200:
-            fam = "c"                                # cyan
-        elif hue < 265:
-            fam = "b"                                # blue
-        else:
-            fam = "p"                                # purple
-    return ch, fam, "2" if s > 0.6 else "1"
+    # monochrome, like the terminal donut: density does the shading
+    return ch, "g", "2" if s > 0.6 else "1"
 
 # classify every cell, then smooth color families with a neighbor vote —
 # a cell surrounded by mostly one family joins it (kills rainbow confetti)
@@ -319,8 +297,8 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   .b1 {{ fill: #3a6ea8; }}
   .p2 {{ fill: #bc8cff; }}
   .p1 {{ fill: #7c4dbb; }}
-  .g2 {{ fill: #c9d1d9; }}
-  .g1 {{ fill: #7d8590; }}
+  .g2 {{ fill: #f0f3f6; }}
+  .g1 {{ fill: #97a1ad; }}
 </style>
 <rect width="{W}" height="{H}" fill="#0d1117" rx="15"/>
 <defs>
