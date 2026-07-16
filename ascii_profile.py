@@ -190,9 +190,10 @@ W, H = 985, 460
 ART_X, ART_Y0 = 15, 38                              # bigger portrait, top-aligned
 ART_LH = 405 / max(h, 1)                            # line height fills the 405px column
 ART_FS = ART_LH * 0.92
-ART_W = 441                                         # 405 * source aspect (446/410) — no face squeeze
-COL_X, COL_Y0, LH = 474, 52, 20
-PANEL_CHARS = 53                                    # chars per info line
+ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
+                                                    # so a slight slim makes the face look correct
+COL_X, COL_Y0, LH = 443, 52, 20
+PANEL_CHARS = 56                                    # chars per info line
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.6   # ...and takes this long to sweep left-to-right

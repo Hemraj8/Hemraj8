@@ -1,5 +1,5 @@
 <a href="https://github.com/Hemraj8">
-  <img alt="HemRaj Sodisetti's GitHub Profile" src="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile.svg?v=12" width="100%">
+  <img alt="HemRaj Sodisetti's GitHub Profile" src="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile.svg?v=13" width="100%">
 </a>
 
 Orchestrating chaos into infrastructure. Edge-to-cloud execution, zero tolerance for mediocrity..
