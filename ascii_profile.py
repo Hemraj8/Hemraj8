@@ -107,18 +107,37 @@ def value(px):
 vmap = [[value(px) for px in row] for row in rows]
 MASK = [[vmap[y][x] > 0.05 for x in range(w)] for y in range(h)]   # background = space
 
+# blur the height surface before taking normals — small features (lips,
+# moustache) become smooth slopes instead of char noise
+def blur(m):
+    out = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            acc = tot = 0
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    wt = (2 if dy == 0 else 1) * (2 if dx == 0 else 1)
+                    ny, nx = min(max(y + dy, 0), h - 1), min(max(x + dx, 0), w - 1)
+                    acc += m[ny][nx] * wt
+                    tot += wt
+            row.append(acc / tot)
+        out.append(row)
+    return out
+
+hmap = blur(vmap)
+
 def vget(y, x):
-    return vmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
+    return hmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
 
 def shaded(y, x):
-    """donut-style luminance: surface normal (from height gradient) . light.
-    Nearly pure normal-lighting like the donut — steep normals, little albedo."""
-    gx = (vget(y, x + 1) - vget(y, x - 1)) * 3.0
-    gy = (vget(y + 1, x) - vget(y - 1, x)) * 3.0
-    nz = 0.42
+    """donut-style luminance: surface normal (from smoothed height) . light"""
+    gx = (vget(y, x + 1) - vget(y, x - 1)) * 2.4
+    gy = (vget(y + 1, x) - vget(y - 1, x)) * 2.4
+    nz = 0.45
     inv = 1.0 / math.sqrt(gx * gx + gy * gy + nz * nz)
     d = max((-gx * LIGHT[0] - gy * LIGHT[1] + nz * LIGHT[2]) * inv, 0.0)
-    return min(0.12 * vmap[y][x] + 0.95 * d, 1.0)
+    return min(0.25 * vmap[y][x] + 0.82 * d, 1.0)
 
 def classify(y, x):
     if not MASK[y][x]:
