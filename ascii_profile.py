@@ -102,7 +102,7 @@ LO, HI = vals[int(len(vals) * 0.05)], vals[int(len(vals) * 0.95)]
 
 def value(px):
     v = (lum(px) - LO) / max(HI - LO, 1)
-    return min(max(v, 0.0), 1.0) ** 0.8      # keep real tonal contrast for likeness
+    return min(max(v, 0.0), 1.0) ** 0.65     # lifted shadows: sculpted look
 
 vmap = [[value(px) for px in row] for row in rows]
 MASK = [[vmap[y][x] > 0.05 for x in range(w)] for y in range(h)]   # background = space
@@ -125,20 +125,21 @@ def blur(m):
         out.append(row)
     return out
 
-hmap = blur(vmap)
+hmap = blur(blur(vmap))     # double blur: small features (moustache, lips)
+                            # become one smooth form, no char noise
 
 def vget(y, x):
     return hmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
 
 def shaded(y, x):
-    """photo tones drive brightness; donut lighting modulates them for depth.
-    Dark hair stays dark, bright shirt stays bright — likeness first."""
+    """donut-style sculpted lighting: surface normal . light, with a dash of
+    photo tone so features (moustache, eyes) keep their shape"""
     gx = (vget(y, x + 1) - vget(y, x - 1)) * 2.4
     gy = (vget(y + 1, x) - vget(y - 1, x)) * 2.4
     nz = 0.45
     inv = 1.0 / math.sqrt(gx * gx + gy * gy + nz * nz)
     d = max((-gx * LIGHT[0] - gy * LIGHT[1] + nz * LIGHT[2]) * inv, 0.0)
-    return min(vmap[y][x] * (0.5 + 0.72 * d) + 0.06 * d, 1.0)
+    return min(0.3 * vmap[y][x] + 0.78 * d, 1.0)
 
 def classify(y, x):
     if not MASK[y][x]:
