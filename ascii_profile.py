@@ -5,7 +5,7 @@ Sequence: ASCII crackers burst in the corners, then the ASCII portrait
 (converted from avatar.png) types in line by line, then the info panel.
 Pure SMIL — renders inside GitHub's README <img> sandbox.
 
-Regenerate:  sips -z 30 60 avatar.png -s format bmp --out small.bmp
+Regenerate:  sips -z 76 152 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
 import json
@@ -56,50 +56,109 @@ except Exception as e:
     STATS = {"uptime": "3 years, 18 days", "repos": 14, "stars": 3,
              "followers": 1, "joined": "June 2023"}
 
-# ---------- 1. read the 60x30 BMP produced by sips ----------
+# ---------- 1. read the BMP produced by sips (2x the char grid) ----------
 data = open("small.bmp", "rb").read()
 off = struct.unpack("<I", data[10:14])[0]
 w, h = struct.unpack("<ii", data[18:26])
+bpp = struct.unpack("<H", data[28:30])[0] // 8      # bytes per pixel: 3 or 4 (BGRA)
 top_down = h < 0
 h = abs(h)
-stride = (w * 3 + 3) & ~3
+stride = (w * bpp + 3) & ~3
 rows = []
 for r in range(h):
     y = r if top_down else h - 1 - r
     base = off + y * stride
     row = []
     for x in range(w):
-        b, g, rr = data[base + x * 3: base + x * 3 + 3]
+        b, g, rr = data[base + x * bpp: base + x * bpp + 3]
         row.append((rr, g, b))
     rows.append(row)
+
+# 2x2 box-average down to the final character grid (kills pixel speckle)
+DS = 2
+grid = []
+for gy in range(h // DS):
+    grow = []
+    for gx in range(w // DS):
+        ps = [rows[gy * DS + dy][gx * DS + dx] for dy in range(DS) for dx in range(DS)]
+        grow.append(tuple(sum(p[i] for p in ps) // len(ps) for i in range(3)))
+    grid.append(grow)
+rows, h, w = grid, h // DS, w // DS
 
 # ---------- 2. pixels -> colored ASCII ----------
 RAMP = " .':;=+*#%@"          # sparse -> dense by brightness
 
 # brightness = max channel (red reads as bright, matching how the eye sees the photo),
-# contrast-stretched between the image's 5th and 98th percentile
-vals = sorted(max(px) for row in rows for px in row)
-LO, HI = vals[int(len(vals) * 0.05)], vals[int(len(vals) * 0.98)]
+# contrast-stretched between the image's 5th and 95th percentile
+def lum(px):
+    return 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
+
+vals = sorted(lum(px) for row in rows for px in row)
+LO, HI = vals[int(len(vals) * 0.05)], vals[int(len(vals) * 0.95)]
 
 def classify(px):
     r, g, b = px
-    v = (max(px) - LO) / max(HI - LO, 1)
-    v = min(max(v, 0.0), 1.0)
+    v = (lum(px) - LO) / max(HI - LO, 1)
+    v = min(max(v, 0.0), 1.0) ** 0.65        # lift shadows (hair keeps its mass)
     ch = RAMP[min(int(v * len(RAMP)), len(RAMP) - 1)]
     if ch == " ":
-        return " ", None
-    if r > 80 and r > 1.5 * g:                       # red-dominant pixel
-        cls = "r2" if v > 0.55 else "r1"
+        return " ", None, None
+    # full-hue color mapping: each pixel gets a hue family + bright/dim band
+    mx, mn = max(px), min(px)
+    sat = (mx - mn) / mx if mx else 0
+    if sat < 0.18:
+        fam = "g"                                    # washed out -> gray
     else:
-        cls = "g2" if v > 0.55 else "g1"
-    return ch, cls
+        if mx == r:
+            h = (60 * (g - b) / (mx - mn)) % 360
+        elif mx == g:
+            h = 60 * (b - r) / (mx - mn) + 120
+        else:
+            h = 60 * (r - g) / (mx - mn) + 240
+        if h < 70 or h >= 330:
+            fam = "o"                                # skin / warm tones
+        elif h < 170:
+            fam = "e"                                # green
+        elif h < 200:
+            fam = "c"                                # cyan
+        elif h < 265:
+            fam = "b"                                # blue
+        else:
+            fam = "p"                                # purple
+    return ch, fam, "2" if v > 0.6 else "1"
+
+# classify every cell, then smooth color families with a neighbor vote —
+# a cell surrounded by mostly one family joins it (kills rainbow confetti)
+cells = [[classify(px) for px in row] for row in rows]
+
+def voted(cy, cx):
+    ch, fam, band = cells[cy][cx]
+    if fam is None:
+        return None
+    votes = {}
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if dy == dx == 0:
+                continue
+            ny, nx = cy + dy, cx + dx
+            if 0 <= ny < h and 0 <= nx < w and cells[ny][nx][1]:
+                nf = cells[ny][nx][1]
+                votes[nf] = votes.get(nf, 0) + 1
+    if votes:
+        top, n = max(votes.items(), key=lambda kv: kv[1])
+        if top != fam and n >= 5:
+            return top
+    return fam
+
+smoothed = [[voted(cy, cx) for cx in range(w)] for cy in range(h)]
 
 art_lines = []                 # each line: list of (class, run_of_chars)
-for row in rows:
+for cy in range(h):
     runs, cur_cls, cur = [], None, ""
-    for px in row:
-        ch, cls = classify(px)
-        key = cls if ch != " " else None
+    for cx in range(w):
+        ch, _, band = cells[cy][cx]
+        fam = smoothed[cy][cx]
+        key = fam + band if (ch != " " and fam) else None
         if key != cur_cls and cur:
             runs.append((cur_cls, cur)); cur = ""
         cur_cls = key
@@ -110,7 +169,9 @@ for row in rows:
 
 # ---------- 3. layout ----------
 W, H = 985, 415
-ART_X, ART_Y0, ART_LH, ART_FS = 18, 40, 12, 10.5   # top-aligned with the info panel
+ART_X, ART_Y0 = 18, 40                              # top-aligned with the info panel
+ART_LH = 360 / max(h, 1)                            # line height fills the 360px column
+ART_FS = ART_LH * 0.92
 ART_W = 368                                         # pixel width of the portrait
 COL_X, COL_Y0, LH = 400, 30, 20
 PANEL_CHARS = 60                                    # chars per info line
@@ -225,13 +286,23 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   .hdr {{ fill: #e6edf3; font-weight: bold; }}
   .r2 {{ fill: #ff5c50; }}
   .r1 {{ fill: #a83a34; }}
+  .o2 {{ fill: #ffa657; }}
+  .o1 {{ fill: #b07038; }}
+  .e2 {{ fill: #56d364; }}
+  .e1 {{ fill: #2f7a3d; }}
+  .c2 {{ fill: #39c5cf; }}
+  .c1 {{ fill: #1f7f88; }}
+  .b2 {{ fill: #58a6ff; }}
+  .b1 {{ fill: #3a6ea8; }}
+  .p2 {{ fill: #bc8cff; }}
+  .p1 {{ fill: #7c4dbb; }}
   .g2 {{ fill: #c9d1d9; }}
   .g1 {{ fill: #7d8590; }}
 </style>
 <rect width="{W}" height="{H}" fill="#0d1117" rx="15"/>
 <defs>
   <clipPath id="reveal">
-    <rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{30 * ART_LH + 24}">
+    <rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{h * ART_LH + 24:.0f}">
       <animate attributeName="width" from="0" to="{ART_W + 12}"
         begin="{REVEAL_T0}s" dur="{REVEAL_DUR}s" fill="freeze"/>
     </rect>
