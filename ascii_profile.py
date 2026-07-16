@@ -5,7 +5,7 @@ Sequence: ASCII crackers burst in the corners, then the ASCII portrait
 (converted from avatar.png) types in line by line, then the info panel.
 Pure SMIL — renders inside GitHub's README <img> sandbox.
 
-Regenerate:  sips -z 76 152 avatar.png -s format bmp --out small.bmp
+Regenerate:  sips -z 100 200 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
 import json
@@ -85,51 +85,74 @@ for gy in range(h // DS):
     grid.append(grow)
 rows, h, w = grid, h // DS, w // DS
 
-# ---------- 2. pixels -> colored ASCII ----------
-RAMP = " .':;=+*#%@"          # sparse -> dense by brightness
+# ---------- 2. pixels -> donut-math shaded ASCII ----------
+# Shading a la a1k0n's donut: treat the portrait as a 3D surface (brightness
+# = height), compute the surface normal from its gradient, dot it with a
+# fixed light direction, and map the result onto the donut character ramp.
+import math
 
-# brightness = max channel (red reads as bright, matching how the eye sees the photo),
-# contrast-stretched between the image's 5th and 95th percentile
+RAMP = ".,-~:;=!*#$@"          # the donut's luminance ramp, dim -> bright
+LIGHT = (-0.45, -0.55, 0.70)   # fixed light from upper-left, in front
+
 def lum(px):
     return 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
 
 vals = sorted(lum(px) for row in rows for px in row)
 LO, HI = vals[int(len(vals) * 0.05)], vals[int(len(vals) * 0.95)]
 
-def classify(px):
-    r, g, b = px
+def value(px):
     v = (lum(px) - LO) / max(HI - LO, 1)
-    v = min(max(v, 0.0), 1.0) ** 0.65        # lift shadows (hair keeps its mass)
-    ch = RAMP[min(int(v * len(RAMP)), len(RAMP) - 1)]
-    if ch == " ":
+    return min(max(v, 0.0), 1.0) ** 0.65     # lift shadows (hair keeps its mass)
+
+vmap = [[value(px) for px in row] for row in rows]
+MASK = [[vmap[y][x] > 0.05 for x in range(w)] for y in range(h)]   # background = space
+
+def vget(y, x):
+    return vmap[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
+
+def shaded(y, x):
+    """donut-style luminance: surface normal (from height gradient) . light"""
+    gx = (vget(y, x + 1) - vget(y, x - 1)) * 1.8
+    gy = (vget(y + 1, x) - vget(y - 1, x)) * 1.8
+    nz = 0.55
+    inv = 1.0 / math.sqrt(gx * gx + gy * gy + nz * nz)
+    d = max((-gx * LIGHT[0] - gy * LIGHT[1] + nz * LIGHT[2]) * inv, 0.0)
+    return min(0.35 * vmap[y][x] + 0.75 * d, 1.0)
+
+def classify(y, x):
+    if not MASK[y][x]:
         return " ", None, None
-    # full-hue color mapping: each pixel gets a hue family + bright/dim band
+    s = shaded(y, x)
+    ch = RAMP[min(int(s * len(RAMP)), len(RAMP) - 1)]
+    # full-hue color mapping: each cell gets a hue family + bright/dim band
+    px = rows[y][x]
+    r, g, b = px
     mx, mn = max(px), min(px)
     sat = (mx - mn) / mx if mx else 0
     if sat < 0.18:
         fam = "g"                                    # washed out -> gray
     else:
         if mx == r:
-            h = (60 * (g - b) / (mx - mn)) % 360
+            hue = (60 * (g - b) / (mx - mn)) % 360
         elif mx == g:
-            h = 60 * (b - r) / (mx - mn) + 120
+            hue = 60 * (b - r) / (mx - mn) + 120
         else:
-            h = 60 * (r - g) / (mx - mn) + 240
-        if h < 70 or h >= 330:
+            hue = 60 * (r - g) / (mx - mn) + 240
+        if hue < 70 or hue >= 330:
             fam = "o"                                # skin / warm tones
-        elif h < 170:
+        elif hue < 170:
             fam = "e"                                # green
-        elif h < 200:
+        elif hue < 200:
             fam = "c"                                # cyan
-        elif h < 265:
+        elif hue < 265:
             fam = "b"                                # blue
         else:
             fam = "p"                                # purple
-    return ch, fam, "2" if v > 0.6 else "1"
+    return ch, fam, "2" if s > 0.6 else "1"
 
 # classify every cell, then smooth color families with a neighbor vote —
 # a cell surrounded by mostly one family joins it (kills rainbow confetti)
-cells = [[classify(px) for px in row] for row in rows]
+cells = [[classify(y, x) for x in range(w)] for y in range(h)]
 
 def voted(cy, cx):
     ch, fam, band = cells[cy][cx]
@@ -146,7 +169,7 @@ def voted(cy, cx):
                 votes[nf] = votes.get(nf, 0) + 1
     if votes:
         top, n = max(votes.items(), key=lambda kv: kv[1])
-        if top != fam and n >= 5:
+        if top != fam and n >= 4 and votes.get(fam, 0) <= 2:
             return top
     return fam
 
@@ -168,13 +191,13 @@ for cy in range(h):
     art_lines.append(runs)
 
 # ---------- 3. layout ----------
-W, H = 985, 415
-ART_X, ART_Y0 = 18, 40                              # top-aligned with the info panel
-ART_LH = 360 / max(h, 1)                            # line height fills the 360px column
+W, H = 985, 460
+ART_X, ART_Y0 = 15, 38                              # bigger portrait, top-aligned
+ART_LH = 405 / max(h, 1)                            # line height fills the 405px column
 ART_FS = ART_LH * 0.92
-ART_W = 368                                         # pixel width of the portrait
-COL_X, COL_Y0, LH = 400, 30, 20
-PANEL_CHARS = 60                                    # chars per info line
+ART_W = 390                                         # pixel width of the portrait
+COL_X, COL_Y0, LH = 425, 52, 20
+PANEL_CHARS = 58                                    # chars per info line
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.6   # ...and takes this long to sweep left-to-right
@@ -221,8 +244,8 @@ EDGE_COLORS = ["#ffd166", "#ff7b72", "#79c0ff", "#d2a8ff", "#56d364", "#f0f3f6"]
 EDGE_CHARS = ["*", "+", "'", "*", ".", "+"]
 
 edge_bits = []
-for i in range(14):
-    y = 34 + i * 27
+for i in range(16):
+    y = 32 + i * 26
     c = EDGE_COLORS[i % len(EDGE_COLORS)]
     ch = EDGE_CHARS[i % len(EDGE_CHARS)]
     xoff = (-6, 2, -2, 6, 0)[i % 5]                  # ragged edge, not a straight line
