@@ -1,60 +1,15 @@
 #!/usr/bin/env python3
-"""Neofetch-style animated GitHub profile SVG (Andrew6rant aesthetic).
+"""ASCII portrait card for the GitHub profile README.
 
-Sequence: ASCII crackers burst in the corners, then the ASCII portrait
-(converted from avatar.png) types in line by line, then the info panel.
+The photo (avatar.png, background removed via cutout.swift) becomes a
+donut-ramp ASCII portrait that sketches itself in left-to-right.
 Pure SMIL — renders inside GitHub's README <img> sandbox.
 
 Regenerate:  sips -z 120 260 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
-import json
-import os
 import struct
-import urllib.request
-from calendar import monthrange
-from datetime import datetime, timezone
 from html import escape
-
-USER = "Hemraj8"
-
-# ---------- 0. live GitHub stats (falls back to last-known values offline) ----------
-def gh(url):
-    req = urllib.request.Request(url, headers={"User-Agent": USER})
-    tok = os.environ.get("GITHUB_TOKEN")
-    if tok:
-        req.add_header("Authorization", f"Bearer {tok}")
-    with urllib.request.urlopen(req, timeout=15) as r:
-        return json.load(r)
-
-def fetch_stats():
-    u = gh(f"https://api.github.com/users/{USER}")
-    repos = gh(f"https://api.github.com/users/{USER}/repos?per_page=100")
-    joined = datetime.fromisoformat(u["created_at"].replace("Z", "+00:00"))
-    now = datetime.now(timezone.utc)
-    y, m, d = now.year - joined.year, now.month - joined.month, now.day - joined.day
-    if d < 0:
-        m -= 1
-        py, pm = (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)
-        d += monthrange(py, pm)[1]
-    if m < 0:
-        y, m = y - 1, m + 12
-    uptime = f"{y} years, {m} months, {d} days" if m else f"{y} years, {d} days"
-    return {
-        "uptime": uptime,
-        "repos": u["public_repos"],
-        "stars": sum(r["stargazers_count"] for r in repos),
-        "followers": u["followers"],
-        "joined": joined.strftime("%B %Y"),
-    }
-
-try:
-    STATS = fetch_stats()
-    print("stats:", STATS)
-except Exception as e:
-    print(f"stats fetch failed ({e}), using fallbacks")
-    STATS = {"uptime": "3 years, 18 days", "repos": 14, "stars": 3,
-             "followers": 1, "joined": "June 2023"}
 
 # ---------- 1. read the BMP produced by sips (2x the char grid) ----------
 data = open("small.bmp", "rb").read()
@@ -185,96 +140,21 @@ for cy in range(h):
         runs.append((cur_cls, cur))
     art_lines.append(runs)
 
-# ---------- 3. layout ----------
-W, H = 985, 460
-ART_X, ART_Y0 = 15, 38                              # bigger portrait, top-aligned
+# ---------- 3. layout: portrait-only card ----------
+ART_X, ART_Y0 = 15, 38
 ART_LH = 405 / max(h, 1)                            # line height fills the 405px column
 ART_FS = ART_LH * 0.92
 ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
                                                     # so a slight slim makes the face look correct
-COL_X, COL_Y0, LH = 443, 52, 20
-PANEL_CHARS = 56                                    # chars per info line
+W, H = ART_X * 2 + ART_W, 450
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
-REVEAL_DUR = 2.6   # ...and takes this long to sweep left-to-right
-T_INFO = 2.4       # info panel starts
+REVEAL_DUR = 2.2   # ...and takes this long to sweep left-to-right
 
-def dots(key, value, extra=0):
-    n = PANEL_CHARS - len(key) - len(value) - 4 - extra
-    return " " + "." * max(n, 2) + " "
-
-def kv(key, value):
-    return (f'<tspan class="cc">. </tspan><tspan class="key">{escape(key)}</tspan>:'
-            f'<tspan class="cc">{dots(key, value)}</tspan><tspan class="value">{escape(value)}</tspan>')
-
-def header(label):
-    pad = "—" * (PANEL_CHARS - len(label) - 3)
-    return f'<tspan class="hdr">{escape(label)}</tspan> <tspan class="cc">-{pad}-</tspan>'
-
-PANEL = [
-    header("hemraj@sodisetti"),
-    kv("OS", "macOS, Linux"),
-    kv("Uptime.GitHub", STATS["uptime"]),
-    kv("Host", "Edge-to-Cloud Infrastructure"),
-    kv("Kernel", "Systems + ML"),
-    kv("IDE", "VS Code, Claude Code"),
-    '<tspan class="cc">. </tspan>',
-    kv("Languages.Programming", "Python, C++, Rust, Go, CUDA"),
-    kv("Languages.Cloud", "AWS, GCP, Docker"),
-    kv("Languages.ML", "PyTorch, TensorFlow"),
-    '<tspan class="cc">. </tspan>',
-    header("- Contact"),
-    kv("Email.Personal", "hemrajsodisetti@gmail.com"),
-    kv("LinkedIn", "hemraj-sodisetti"),
-    kv("GitHub", "github.com/Hemraj8"),
-    '<tspan class="cc">. </tspan>',
-    header("- GitHub Stats"),
-    kv("Repos", f"{STATS['repos']} | Stars: {STATS['stars']}"),
-    kv("Followers", f"{STATS['followers']} | Joined: {STATS['joined']}"),
-]
-
-# ---------- 4. sketch-draw reveal with a colorful crackling edge ----------
-# The portrait is revealed by a clip window that widens left-to-right, as if
-# being sketched in. A column of colorful crackling sparks rides the pen edge.
-EDGE_COLORS = ["#ffd166", "#ff7b72", "#79c0ff", "#d2a8ff", "#56d364", "#f0f3f6"]
-EDGE_CHARS = ["*", "+", "'", "*", ".", "+"]
-
-edge_bits = []
-for i in range(16):
-    y = 32 + i * 26
-    c = EDGE_COLORS[i % len(EDGE_COLORS)]
-    ch = EDGE_CHARS[i % len(EDGE_CHARS)]
-    xoff = (-6, 2, -2, 6, 0)[i % 5]                  # ragged edge, not a straight line
-    blink = 0.10 + (i % 4) * 0.04
-    edge_bits.append(
-        f'<text x="{xoff}" y="{y}" font-size="{11 + i % 6}" fill="{c}">{ch}'
-        f'<animate attributeName="opacity" values="1;0.15;1" dur="{blink:.2f}s" repeatCount="indefinite"/></text>'
-    )
-
-SPARKLER = (
-    f'<g opacity="0">'
-    f'<animate attributeName="opacity" values="0;0;1;1;0" '
-    f'keyTimes="0;{REVEAL_T0/(REVEAL_T0+REVEAL_DUR+0.3):.3f};{(REVEAL_T0+0.15)/(REVEAL_T0+REVEAL_DUR+0.3):.3f};0.92;1" '
-    f'dur="{REVEAL_T0+REVEAL_DUR+0.3:.1f}s" fill="freeze"/>'
-    f'<animateTransform attributeName="transform" type="translate" '
-    f'from="{ART_X} 0" to="{ART_X + ART_W + 8} 0" begin="{REVEAL_T0}s" dur="{REVEAL_DUR}s" fill="freeze"/>'
-    + "".join(edge_bits) + "</g>"
-)
-
-# no persistent sparkles — the card sits still once the sketch reveal is done
-
-# ---------- 5. assemble ----------
+# ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
-# identical in every renderer regardless of which monospace font loads
-import re as _re
-
-CHAR_W = 9.3         # panel: px per character (60 chars ~ 558px)
-
-def plain_len(svg_fragment):
-    return len(_re.sub(r"<[^>]+>", "", svg_fragment)
-               .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"))
-
-# portrait lines are fully drawn; the animated clip window reveals them
+# identical in every renderer regardless of which monospace font loads.
+# The portrait is fully drawn; an animated clip window reveals it.
 art_svg = []
 for i, runs in enumerate(art_lines):
     spans = "".join(
@@ -286,35 +166,9 @@ for i, runs in enumerate(art_lines):
         f'textLength="{ART_W}" lengthAdjust="spacingAndGlyphs">{spans}</text>'
     )
 
-panel_svg = []
-for i, content in enumerate(PANEL):
-    t = T_INFO + i * 0.10
-    tl = plain_len(content) * CHAR_W
-    panel_svg.append(
-        f'<text x="{COL_X}" y="{COL_Y0 + i * LH}" textLength="{tl:.0f}" '
-        f'lengthAdjust="spacingAndGlyphs" opacity="0">{content}'
-        f'<animate attributeName="opacity" begin="{t:.2f}s" dur="0.3s" from="0" to="1" fill="freeze"/></text>'
-    )
-
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Consolas, 'Fira Code', Menlo, monospace" font-size="16">
+svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Consolas, 'Fira Code', Menlo, monospace">
 <style>
   text, tspan {{ white-space: pre; }}
-  .key {{ fill: #ffa657; }}
-  .value {{ fill: #79c0ff; }}
-  .cc {{ fill: #4d5566; }}
-  .hdr {{ fill: #e6edf3; font-weight: bold; }}
-  .r2 {{ fill: #ff5c50; }}
-  .r1 {{ fill: #a83a34; }}
-  .o2 {{ fill: #ffa657; }}
-  .o1 {{ fill: #b07038; }}
-  .e2 {{ fill: #56d364; }}
-  .e1 {{ fill: #2f7a3d; }}
-  .c2 {{ fill: #39c5cf; }}
-  .c1 {{ fill: #1f7f88; }}
-  .b2 {{ fill: #58a6ff; }}
-  .b1 {{ fill: #3a6ea8; }}
-  .p2 {{ fill: #bc8cff; }}
-  .p1 {{ fill: #7c4dbb; }}
   .g2 {{ fill: #f0f3f6; }}
   .g1 {{ fill: #97a1ad; }}
 </style>
@@ -330,8 +184,6 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
 <g clip-path="url(#reveal)">
 {"".join(art_svg)}
 </g>
-{SPARKLER}
-{"".join(panel_svg)}
 </svg>
 '''
 
