@@ -146,30 +146,43 @@ ART_LH = 405 / max(h, 1)                            # line height fills the 405p
 ART_FS = ART_LH * 0.92
 ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
                                                     # so a slight slim makes the face look correct
-W, H = ART_X * 2 + ART_W, 552
+W, H = ART_X * 2 + ART_W, 600
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.2   # ...and takes this long to sweep left-to-right
+T_NAME = REVEAL_T0 + REVEAL_DUR          # name block appears when the sketch lands
 
-# ---------- 3b. "right now" status bars under the portrait ----------
-# label / bar / annotation columns; the orange fill is the card's one accent.
-# Bars fill left-to-right after the portrait reveal — same motion language.
+# ---------- 3b. name block + "right now" bars under the portrait ----------
+# left-aligned identity (orange > prompt, letter-spaced name, muted subtitle),
+# then the status bars: labels left, fills mid, annotations flush right.
+SUBTITLE = [("systems engineer", None), (" · ", "#f97316"), ("builder", None),
+            (" · ", "#f97316"), ("problem solver", None)]
+sub_spans = "".join(
+    f'<tspan fill="{c or "#6e7681"}">{escape(t)}</tspan>' for t, c in SUBTITLE
+)
+
+name_svg = (
+    f'<rect x="20" y="450" width="{W - 40}" height="1" fill="#21262d"/>'
+    f'<g opacity="0">'
+    f'<animate attributeName="opacity" begin="{T_NAME:.1f}s" dur="0.5s" from="0" to="1" fill="freeze"/>'
+    f'<text x="30" y="486" font-size="17" fill="#f97316">&gt;</text>'
+    f'<text x="52" y="486" font-size="17" letter-spacing="6" fill="#f0f3f6">HEMRAJ SODISETTI</text>'
+    f'<text x="52" y="510" font-size="11" letter-spacing="1">{sub_spans}</text>'
+    f'</g>'
+)
+
 BARS = [
     ("building", 9, "systems that don't fall over"),
     ("learning", 7, "whatever the problem demands"),
     ("sleeping", 2, "overrated anyway"),
 ]
 BAR_CW = 7.2                     # char width at font-size 12
-LABEL_X, BAR_X, NOTE_X = 30, 118, 210
+LABEL_X, BAR_X = 30, 118
 
-bars_svg = [
-    f'<rect x="20" y="450" width="{W - 40}" height="1" fill="#21262d"/>',
-    f'<text x="{LABEL_X}" y="472" font-size="11" fill="#6e7681" opacity="0">// right now'
-    f'<animate attributeName="opacity" begin="{REVEAL_T0 + REVEAL_DUR:.1f}s" dur="0.4s" from="0" to="1" fill="freeze"/></text>',
-]
+bars_svg = [name_svg]
 for i, (label, fill, note) in enumerate(BARS):
-    y = 494 + i * 21
-    t0 = REVEAL_T0 + REVEAL_DUR + 0.2 + i * 0.25
+    y = 540 + i * 21
+    t0 = T_NAME + 0.4 + i * 0.25
     fill_w = fill * BAR_CW
     bars_svg.append(
         f'<g opacity="0">'
@@ -181,7 +194,8 @@ for i, (label, fill, note) in enumerate(BARS):
         f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
         f'<text x="{BAR_X}" y="{y}" font-size="12" fill="#f97316" clip-path="url(#barfill{i})" '
         f'textLength="{fill_w:.0f}" lengthAdjust="spacingAndGlyphs">{"▓" * fill}</text>'
-        f'<text x="{NOTE_X}" y="{y}" font-size="12" fill="#6e7681" textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
+        f'<text x="{W - 30}" y="{y}" font-size="12" fill="#6e7681" text-anchor="end" '
+        f'textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
         f'</g>'
     )
 BARS_SVG = "".join(bars_svg)
