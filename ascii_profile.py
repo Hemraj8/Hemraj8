@@ -140,51 +140,84 @@ for cy in range(h):
         runs.append((cur_cls, cur))
     art_lines.append(runs)
 
-# ---------- 3. layout: portrait-only card ----------
+# ---------- 3. layout: two-column card ----------
+# left: portrait + name/subtitle/tagline · right: terminal-style info panes
 ART_X, ART_Y0 = 15, 38
 ART_LH = 405 / max(h, 1)                            # line height fills the 405px column
 ART_FS = ART_LH * 0.92
 ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
                                                     # so a slight slim makes the face look correct
-W, H = ART_X * 2 + ART_W, 552
+W, H = 880, 556
+RX = 470                                            # right column x
+NOTE_END = W - 30                                   # right rail for bar annotations
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.2   # ...and takes this long to sweep left-to-right
+T_NAME = REVEAL_T0 + REVEAL_DUR
+BAR_CW = 7.2       # char width at font-size 12
 
-# ---------- 3b. "right now" status bars under the portrait ----------
-# label / bar / annotation columns; the orange fill is the card's one accent.
-# Bars fill left-to-right after the portrait reveal — same motion language.
+def fade(t):
+    return f'<animate attributeName="opacity" begin="{t:.2f}s" dur="0.4s" from="0" to="1" fill="freeze"/>'
+
+def pane_header(label, y, t):
+    return (f'<text x="{RX}" y="{y}" font-size="11" fill="#6e7681" opacity="0">{escape(label)}{fade(t)}</text>')
+
+def dotted(items, y, t):
+    """values separated by orange middots, terminal-muted"""
+    spans = f'<tspan fill="#f97316"> · </tspan>'.join(
+        f'<tspan fill="#97a1ad">{escape(it)}</tspan>' for it in items
+    )
+    return f'<text x="{RX}" y="{y}" font-size="12" letter-spacing="0.5" opacity="0">{spans}{fade(t)}</text>'
+
+# -- left: name block under the portrait --
+SUBTITLE = f'<tspan fill="#f97316"> · </tspan>'.join(
+    f'<tspan fill="#97a1ad">{s}</tspan>' for s in ("systems engineer", "builder", "problem solver")
+)
+LEFT_SVG = (
+    f'<g opacity="0">{fade(T_NAME)}'
+    f'<text x="18" y="484" font-size="16" fill="#f97316">&gt;</text>'
+    f'<text x="40" y="484" font-size="16" letter-spacing="5" fill="#f0f3f6">HEMRAJ SODISETTI</text>'
+    f'<text x="40" y="508" font-size="11" letter-spacing="1">{SUBTITLE}</text>'
+    f'<text x="40" y="530" font-size="11" fill="#6e7681">builds infrastructure that doesn\'t fall over.</text>'
+    f'</g>'
+)
+
+# -- right: terminal panes (right now / stack / principle) --
 BARS = [
     ("building", 9, "systems that don't fall over"),
     ("learning", 7, "whatever the problem demands"),
     ("sleeping", 2, "overrated anyway"),
 ]
-BAR_CW = 7.2                     # char width at font-size 12
-LABEL_X, BAR_X, NOTE_X = 30, 118, 210
-
-bars_svg = [
-    f'<rect x="20" y="450" width="{W - 40}" height="1" fill="#21262d"/>',
-    f'<text x="{LABEL_X}" y="472" font-size="11" fill="#6e7681" opacity="0">// right now'
-    f'<animate attributeName="opacity" begin="{REVEAL_T0 + REVEAL_DUR:.1f}s" dur="0.4s" from="0" to="1" fill="freeze"/></text>',
+right = [
+    f'<rect x="447" y="60" width="1" height="400" fill="#21262d"/>',   # pane divider
+    pane_header("// right now", 100, T_NAME + 0.2),
 ]
 for i, (label, fill, note) in enumerate(BARS):
-    y = 494 + i * 21
-    t0 = REVEAL_T0 + REVEAL_DUR + 0.2 + i * 0.25
+    y = 130 + i * 24
+    t0 = T_NAME + 0.35 + i * 0.25
     fill_w = fill * BAR_CW
-    bars_svg.append(
+    right.append(
         f'<g opacity="0">'
         f'<animate attributeName="opacity" begin="{t0:.2f}s" dur="0.35s" from="0" to="1" fill="freeze"/>'
-        f'<text x="{LABEL_X}" y="{y}" font-size="12" fill="#97a1ad" textLength="{len(label) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{label}</text>'
-        f'<text x="{BAR_X}" y="{y}" font-size="12" fill="#2d333b" textLength="{10 * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"░" * 10}</text>'
-        f'<clipPath id="barfill{i}"><rect x="{BAR_X}" y="{y - 12}" width="0" height="16">'
+        f'<text x="{RX}" y="{y}" font-size="12" fill="#97a1ad" textLength="{len(label) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{label}</text>'
+        f'<text x="{RX + 90}" y="{y}" font-size="12" fill="#2d333b" textLength="{10 * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"░" * 10}</text>'
+        f'<clipPath id="barfill{i}"><rect x="{RX + 90}" y="{y - 12}" width="0" height="16">'
         f'<animate attributeName="width" from="0" to="{fill_w + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
         f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
-        f'<text x="{BAR_X}" y="{y}" font-size="12" fill="#f97316" clip-path="url(#barfill{i})" '
+        f'<text x="{RX + 90}" y="{y}" font-size="12" fill="#f97316" clip-path="url(#barfill{i})" '
         f'textLength="{fill_w:.0f}" lengthAdjust="spacingAndGlyphs">{"▓" * fill}</text>'
-        f'<text x="{NOTE_X}" y="{y}" font-size="12" fill="#6e7681" textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
+        f'<text x="{NOTE_END}" y="{y}" font-size="12" fill="#6e7681" text-anchor="end" '
+        f'textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
         f'</g>'
     )
-BARS_SVG = "".join(bars_svg)
+right += [
+    pane_header("// stack", 252, T_NAME + 1.2),
+    dotted(["rust", "go", "python", "c++", "cuda"], 280, T_NAME + 1.35),
+    dotted(["aws", "gcp", "k8s", "docker", "pytorch"], 304, T_NAME + 1.5),
+    pane_header("// principle", 368, T_NAME + 1.7),
+    f'<text x="{RX}" y="396" font-size="12" fill="#97a1ad" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.85)}</text>',
+]
+BARS_SVG = LEFT_SVG + "".join(right)
 
 # ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
