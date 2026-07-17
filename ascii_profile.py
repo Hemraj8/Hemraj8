@@ -171,11 +171,11 @@ for cy in range(h):
 # right = big name, toolchain rack, github stats, live plan. one orange accent.
 ICONS = json.load(open("tool_icons.json"))
 
-W, H = 980, 600
+W, H = 980, 624
 TB = 46                                             # titlebar height
 ART_X, ART_Y0 = 18, TB + 18
 ART_W = 468                                         # bigger portrait
-ART_LH = (ART_W * 360 / 410) / max(h, 1)            # keep the slimmed face aspect
+ART_LH = 436 / max(h, 1)                            # taller: fixes the squeeze (true aspect ~430)
 ART_FS = ART_LH * 0.92
 RX = 512                                            # right column x (portrait grew)
 NOTE_END = W - 26
@@ -207,11 +207,11 @@ CAP = "not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@"
 BARS = [("building", 90), ("learning", 65), ("sleeping", 15)]
 BAR_N = 42
 left = [
-    f'<text x="20" y="502" font-size="10" fill="#aeb6c0" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
-    f'<text x="20" y="528" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
+    f'<text x="20" y="528" font-size="10" fill="#aeb6c0" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
+    f'<text x="20" y="554" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
 ]
 for i, (label, pct) in enumerate(BARS):
-    y = 550 + i * 21
+    y = 576 + i * 21
     t0 = T_NAME + 0.3 + i * 0.2
     filled = round(pct * BAR_N / 100)
     fw = filled * BAR_CW
@@ -275,18 +275,18 @@ def stat(key, val, x, y, chars=27):
 GC = RX + 232   # right stat column
 stats = (
     f'<g opacity="0">{fade(T_NAME + 0.9)}'
-    f'<text x="{RX}" y="312" font-size="13" letter-spacing="1">'
+    f'<text x="{RX}" y="322" font-size="13" letter-spacing="1">'
     f'<tspan fill="#f97316">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
-    f'<line x1="{RX + 128}" y1="308" x2="{W - 16}" y2="308" stroke="#2a2a2a"/>'
-    f'{stat("Repos", STATS["repos"], RX, 346, chars=24)}{stat("Joined", STATS["joined"], GC, 346, chars=24)}'
+    f'<line x1="{RX + 128}" y1="318" x2="{W - 16}" y2="318" stroke="#2a2a2a"/>'
+    f'{stat("Repos", STATS["repos"], RX, 356, chars=24)}{stat("Joined", STATS["joined"], GC, 356, chars=24)}'
     f'</g>'
 )
 
 plan = (
-    f'<text x="{RX}" y="416" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="444" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
-    f'<text x="{RX}" y="446" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
-    f'<text x="{RX}" y="486" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="474" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
+    f'<text x="{RX}" y="514" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
 )
 
