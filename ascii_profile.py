@@ -146,10 +146,45 @@ ART_LH = 405 / max(h, 1)                            # line height fills the 405p
 ART_FS = ART_LH * 0.92
 ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
                                                     # so a slight slim makes the face look correct
-W, H = ART_X * 2 + ART_W, 450
+W, H = ART_X * 2 + ART_W, 552
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.2   # ...and takes this long to sweep left-to-right
+
+# ---------- 3b. "right now" status bars under the portrait ----------
+# label / bar / annotation columns; the orange fill is the card's one accent.
+# Bars fill left-to-right after the portrait reveal — same motion language.
+BARS = [
+    ("building", 9, "systems that don't fall over"),
+    ("learning", 7, "whatever the problem demands"),
+    ("sleeping", 2, "overrated anyway"),
+]
+BAR_CW = 7.2                     # char width at font-size 12
+LABEL_X, BAR_X, NOTE_X = 30, 118, 210
+
+bars_svg = [
+    f'<rect x="20" y="450" width="{W - 40}" height="1" fill="#21262d"/>',
+    f'<text x="{LABEL_X}" y="472" font-size="11" fill="#6e7681" opacity="0">// right now'
+    f'<animate attributeName="opacity" begin="{REVEAL_T0 + REVEAL_DUR:.1f}s" dur="0.4s" from="0" to="1" fill="freeze"/></text>',
+]
+for i, (label, fill, note) in enumerate(BARS):
+    y = 494 + i * 21
+    t0 = REVEAL_T0 + REVEAL_DUR + 0.2 + i * 0.25
+    fill_w = fill * BAR_CW
+    bars_svg.append(
+        f'<g opacity="0">'
+        f'<animate attributeName="opacity" begin="{t0:.2f}s" dur="0.35s" from="0" to="1" fill="freeze"/>'
+        f'<text x="{LABEL_X}" y="{y}" font-size="12" fill="#97a1ad" textLength="{len(label) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{label}</text>'
+        f'<text x="{BAR_X}" y="{y}" font-size="12" fill="#2d333b" textLength="{10 * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"░" * 10}</text>'
+        f'<clipPath id="barfill{i}"><rect x="{BAR_X}" y="{y - 12}" width="0" height="16">'
+        f'<animate attributeName="width" from="0" to="{fill_w + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
+        f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
+        f'<text x="{BAR_X}" y="{y}" font-size="12" fill="#f97316" clip-path="url(#barfill{i})" '
+        f'textLength="{fill_w:.0f}" lengthAdjust="spacingAndGlyphs">{"▓" * fill}</text>'
+        f'<text x="{NOTE_X}" y="{y}" font-size="12" fill="#6e7681" textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
+        f'</g>'
+    )
+BARS_SVG = "".join(bars_svg)
 
 # ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
@@ -184,6 +219,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
 <g clip-path="url(#reveal)">
 {"".join(art_svg)}
 </g>
+{BARS_SVG}
 </svg>
 '''
 
