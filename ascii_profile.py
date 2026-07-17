@@ -207,7 +207,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   .g2 {{ fill: #f0f3f6; }}
   .g1 {{ fill: #97a1ad; }}
 </style>
-<rect width="{W}" height="{H}" fill="#0d1117" rx="15"/>
+<rect width="{W}" height="{H}" fill="#010409" rx="15"/>
 <defs>
   <clipPath id="reveal">
     <rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{h * ART_LH + 24:.0f}">

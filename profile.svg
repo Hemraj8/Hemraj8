@@ -4,7 +4,7 @@
   .g2 { fill: #f0f3f6; }
   .g1 { fill: #97a1ad; }
 </style>
-<rect width="440" height="552" fill="#0d1117" rx="15"/>
+<rect width="440" height="552" fill="#010409" rx="15"/>
 <defs>
   <clipPath id="reveal">
     <rect x="11" y="22" width="0" height="429">
