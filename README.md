@@ -1,8 +1,10 @@
 <div align="center">
 
-<a href="https://github.com/Hemraj8"><img src="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile.svg?v=21" width="100%" alt="hemraj — ascii self-portrait" /></a>
+<a href="https://github.com/Hemraj8"><img src="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile.svg?v=22" width="100%" alt="hemraj — ascii self-portrait" /></a>
 
 <sub>`not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@`</sub>
+
+</div>
 
 <br/>
 
@@ -14,8 +16,4 @@
 &nbsp;
 [![github](https://img.shields.io/badge/github-Hemraj8-0d1117?style=flat-square&labelColor=010409&logo=github&logoColor=f97316)](https://github.com/Hemraj8)
 
-<br/>
-
 <sub>the repos say the rest.</sub>
-
-</div>
