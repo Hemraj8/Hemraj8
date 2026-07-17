@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://github.com/Hemraj8"><img src="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile.svg?v=17" width="420" alt="hemraj — ascii self-portrait" /></a>
+<a href="https://github.com/Hemraj8"><img src="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile.svg?v=18" width="420" alt="hemraj — ascii self-portrait" /></a>
 
 <sub>`not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@`</sub>
 
