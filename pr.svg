@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="186" height="44" viewBox="0 0 186 44" font-family="Consolas, 'Fira Code', Menlo, monospace">
+<rect x="1" y="1" width="184" height="42" rx="6" fill="#e6edf3"/>
+<text x="20" y="29" font-size="19" font-weight="bold" letter-spacing="1"><tspan fill="#c2410c">$</tspan><tspan fill="#0d1117"> open a PR</tspan></text>
+</svg>

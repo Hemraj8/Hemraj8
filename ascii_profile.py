@@ -8,8 +8,34 @@ Pure SMIL — renders inside GitHub's README <img> sandbox.
 Regenerate:  sips -z 120 260 avatar.png -s format bmp --out small.bmp
              python3 ascii_profile.py
 """
+import json
+import os
 import struct
+import urllib.request
+from datetime import datetime
 from html import escape
+
+# ---------- 0. live GitHub stats (static fallback offline) ----------
+USER = "Hemraj8"
+
+def _gh(url):
+    req = urllib.request.Request(url, headers={"User-Agent": USER})
+    tok = os.environ.get("GITHUB_TOKEN")
+    if tok:
+        req.add_header("Authorization", f"Bearer {tok}")
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.load(r)
+
+try:
+    u = _gh(f"https://api.github.com/users/{USER}")
+    reps = _gh(f"https://api.github.com/users/{USER}/repos?per_page=100")
+    joined = datetime.fromisoformat(u["created_at"].replace("Z", "+00:00"))
+    STATS = {"repos": u["public_repos"], "stars": sum(r["stargazers_count"] for r in reps),
+             "followers": u["followers"], "joined": joined.strftime("%B %Y")}
+    print("stats:", STATS)
+except Exception as e:
+    print("stats fallback:", e)
+    STATS = {"repos": 14, "stars": 3, "followers": 1, "joined": "June 2023"}
 
 # ---------- 1. read the BMP produced by sips (2x the char grid) ----------
 data = open("small.bmp", "rb").read()
@@ -142,8 +168,7 @@ for cy in range(h):
 
 # ---------- 3. layout: a terminal window ----------
 # mac chrome; left = portrait + caption + "right now" bars;
-# right = big name, toolchain icon rack, live plan. one orange accent.
-import json
+# right = big name, toolchain rack, github stats, live plan. one orange accent.
 ICONS = json.load(open("tool_icons.json"))
 
 W, H = 980, 560
@@ -183,24 +208,27 @@ CAP = "not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@"
 BARS = [("building", 90), ("learning", 65), ("sleeping", 15)]
 BAR_N = 28
 left = [
-    f'<text x="20" y="450" font-size="9.5" fill="#565f6b" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
-    f'<text x="20" y="478" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
+    # subtle panels behind the caption and the status block
+    f'<rect x="14" y="438" width="412" height="20" rx="4" fill="#0c1016" opacity="0">{fade(T_NAME)}</rect>',
+    f'<rect x="14" y="466" width="412" height="86" rx="6" fill="#0b0e13" opacity="0">{fade(T_NAME + 0.1)}</rect>',
+    f'<text x="20" y="452" font-size="9.5" fill="#6b7480" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
+    f'<text x="24" y="486" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
 ]
 for i, (label, pct) in enumerate(BARS):
-    y = 502 + i * 22
+    y = 508 + i * 22
     t0 = T_NAME + 0.3 + i * 0.2
     filled = round(pct * BAR_N / 100)
     fw = filled * BAR_CW
     left.append(
         f'<g opacity="0"><animate attributeName="opacity" begin="{t0:.2f}s" dur="0.35s" from="0" to="1" fill="freeze"/>'
-        f'<text x="20" y="{y}" font-size="12" fill="#8b949e" textLength="72" lengthAdjust="spacingAndGlyphs">{label}</text>'
-        f'<text x="104" y="{y}" font-size="12" fill="#242a33" textLength="{BAR_N * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"▏" * BAR_N}</text>'
-        f'<clipPath id="bf{i}"><rect x="104" y="{y - 12}" width="0" height="16">'
+        f'<text x="24" y="{y}" font-size="12" fill="#8b949e" textLength="72" lengthAdjust="spacingAndGlyphs">{label}</text>'
+        f'<text x="108" y="{y}" font-size="12" fill="#242a33" textLength="{BAR_N * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"▏" * BAR_N}</text>'
+        f'<clipPath id="bf{i}"><rect x="108" y="{y - 12}" width="0" height="16">'
         f'<animate attributeName="width" from="0" to="{fw + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
         f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
-        f'<text x="104" y="{y}" font-size="12" fill="#f97316" clip-path="url(#bf{i})" '
+        f'<text x="108" y="{y}" font-size="12" fill="#f97316" clip-path="url(#bf{i})" '
         f'textLength="{fw:.0f}" lengthAdjust="spacingAndGlyphs">{"▎" * filled}</text>'
-        f'<text x="{ART_X + ART_W}" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
+        f'<text x="418" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
         f'font-variant-numeric="tabular-nums">{pct}%</text></g>'
     )
 
@@ -213,7 +241,7 @@ name = (
     f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan>{blink("#f97316")}</text>'
     f'<text x="{RX + 2}" y="148" font-size="13" letter-spacing="2">'
     + '<tspan fill="#f97316"> · </tspan>'.join(
-        f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER")
+        f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER", "PROBLEM SOLVER")
     )
     + '</text></g>'
 )
@@ -240,15 +268,34 @@ for i, ic in enumerate(ICONS):
     )
 tool.append('</g>')
 
-plan = (
-    f'<text x="{RX}" y="376" font-size="13" opacity="0">'
-    f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.2)}</text>'
-    f'<text x="{RX}" y="406" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.35)}</text>'
-    f'<text x="{RX}" y="490" font-size="13" opacity="0">'
-    f'<tspan fill="#f97316">$</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.6)}</text>'
+# ---- github stats: header with divider + 2x2 dotted grid ----
+def stat(key, val, x, y, chars=27):
+    n = max(chars - len(key) - len(str(val)) - 2, 2)
+    return (f'<text x="{x}" y="{y}" font-size="13">'
+            f'<tspan fill="#f97316">{escape(key)}</tspan>'
+            f'<tspan fill="#2d333b"> {"." * n} </tspan>'
+            f'<tspan fill="#e6edf3">{escape(str(val))}</tspan></text>')
+
+GC = RX + 262   # right stat column
+stats = (
+    f'<g opacity="0">{fade(T_NAME + 0.9)}'
+    f'<text x="{RX}" y="308" font-size="13" letter-spacing="1">'
+    f'<tspan fill="#f97316">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
+    f'<line x1="{RX + 128}" y1="304" x2="{RX + 495}" y2="304" stroke="#21262d"/>'
+    f'{stat("Repos", STATS["repos"], RX, 340)}{stat("Joined", STATS["joined"], GC, 340)}'
+    f'{stat("Stars", STATS["stars"], RX, 364)}{stat("Followers", STATS["followers"], GC, 364)}'
+    f'</g>'
 )
 
-BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + plan
+plan = (
+    f'<text x="{RX}" y="424" font-size="13" opacity="0">'
+    f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
+    f'<text x="{RX}" y="454" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
+    f'<text x="{RX}" y="512" font-size="13" opacity="0">'
+    f'<tspan fill="#f97316">$</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
+)
+
+BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + stats + plan
 
 # ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
