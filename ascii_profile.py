@@ -185,14 +185,13 @@ TITLEBAR = (
 
 # ---- left: name block under the portrait ----
 SUBTITLE = '<tspan fill="#f97316"> · </tspan>'.join(
-    f'<tspan fill="#8b949e">{s}</tspan>' for s in ("systems engineer", "builder", "problem solver")
+    f'<tspan fill="#8b949e">{s}</tspan>' for s in ("systems engineer", "builder")
 )
 NAME_SVG = (
     f'<g opacity="0">{fade(T_NAME)}'
-    f'<text x="18" y="482" font-size="16" fill="#f97316">&gt;</text>'
-    f'<text x="40" y="482" font-size="16" letter-spacing="5" fill="#f0f3f6">HEMRAJ SODISETTI</text>'
-    f'<text x="40" y="506" font-size="11" letter-spacing="1">{SUBTITLE}</text>'
-    f'<text x="40" y="528" font-size="11" fill="#6e7681">builds infrastructure that doesn\'t fall over.</text>'
+    f'<text x="18" y="500" font-size="17" fill="#f97316">&gt;</text>'
+    f'<text x="42" y="500" font-size="17" letter-spacing="5" fill="#f0f3f6">HEMRAJ SODISETTI</text>'
+    f'<text x="42" y="524" font-size="12" letter-spacing="1">{SUBTITLE}</text>'
     f'</g>'
 )
 
@@ -224,15 +223,25 @@ for i, (label, fill, note) in enumerate(BARS):
         f'textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
         f'</g>'
     )
+def stack_row(label, items, y, t):
+    """neofetch-style labeled row: dim label, then dotted values"""
+    vals = '<tspan fill="#484f58"> · </tspan>'.join(
+        f'<tspan fill="#8b949e">{escape(it)}</tspan>' for it in items
+    )
+    return (f'<g opacity="0">{fade(t)}'
+            f'<text x="{RX}" y="{y}" font-size="12.5" fill="#6e7681">{escape(label)}</text>'
+            f'<text x="{RX + 88}" y="{y}" font-size="12.5">{vals}</text></g>')
+
 session += [
-    cmd("cat ~/stack", 262, T_NAME + 1.15),
-    out_dotted(["rust", "go", "python", "c++", "cuda"], 290, T_NAME + 1.3),
-    out_dotted(["aws", "gcp", "k8s", "docker", "pytorch"], 314, T_NAME + 1.45),
-    cmd("tail -1 ~/.plan", 386, T_NAME + 1.65),
-    f'<text x="{RX}" y="414" font-size="12.5" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.8)}</text>',
+    cmd("cat ~/stack", 254, T_NAME + 1.15),
+    stack_row("languages", ["rust", "go", "python", "c++", "cuda"], 282, T_NAME + 1.28),
+    stack_row("cloud", ["aws", "gcp", "k8s", "docker"], 304, T_NAME + 1.4),
+    stack_row("ml", ["pytorch", "tensorflow"], 326, T_NAME + 1.52),
+    cmd("tail -1 ~/.plan", 390, T_NAME + 1.7),
+    f'<text x="{RX}" y="418" font-size="12.5" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.83)}</text>',
     # live prompt with a blinking cursor
     f'<g opacity="0">{fade(T_NAME + 2.0)}'
-    f'<text x="{RX}" y="474" font-size="12.5"><tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> </tspan>'
+    f'<text x="{RX}" y="476" font-size="12.5"><tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> </tspan>'
     f'<tspan fill="#e6edf3">▊<animate attributeName="fill-opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1.1s" repeatCount="indefinite"/></tspan></text>'
     f'</g>',
 ]
