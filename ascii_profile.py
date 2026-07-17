@@ -290,7 +290,31 @@ plan = (
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
 )
 
-BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + stats + plan
+# ---- contact buttons: inside the terminal, under the plan (mirrors make_buttons.py) ----
+BTN_ICONS = json.load(open("btn_icons.json"))
+BTN_H = 40
+BTN_Y = 552
+
+def envelope(color):
+    return (f'<rect x="1.5" y="4" width="21" height="16" rx="2" fill="none" stroke="{color}" stroke-width="2"/>'
+            f'<path d="M2 6 L12 13 L22 6" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round"/>')
+
+def btn(x, label, icon_svg, color, text_color):
+    bw = 44 + int(len(label) * 8.4) + 20
+    g = (f'<g transform="translate({x:.0f},{BTN_Y})">'
+         f'<rect x="1" y="1" width="{bw - 2}" height="{BTN_H - 2}" rx="7" fill="#0a0a0a" stroke="{color}" stroke-width="1.2"/>'
+         f'<g transform="translate(15,{BTN_H / 2 - 8}) scale(0.667)">{icon_svg}</g>'
+         f'<text x="42" y="{BTN_H / 2 + 4:.0f}" font-size="12" letter-spacing="1.5" fill="{text_color}" font-weight="bold">{label}</text>'
+         f'</g>')
+    return g, bw
+
+ORANGE = "#f97316"
+email_btn, ew = btn(RX, "EMAIL", envelope(ORANGE), ORANGE, ORANGE)
+li_btn, _ = btn(RX + ew + 14, "LINKEDIN",
+                f'<path d="{BTN_ICONS["linkedin"]}" fill="#c9d1d9"/>', "#30363d", "#8b949e")
+buttons = f'<g opacity="0">{fade(T_NAME + 2.0)}{email_btn}{li_btn}</g>'
+
+BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + stats + plan + buttons
 
 # ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
