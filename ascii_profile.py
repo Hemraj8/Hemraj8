@@ -171,14 +171,13 @@ for cy in range(h):
 # right = big name, toolchain rack, github stats, live plan. one orange accent.
 ICONS = json.load(open("tool_icons.json"))
 
-W, H = 980, 560
+W, H = 980, 600
 TB = 46                                             # titlebar height
-ART_X, ART_Y0 = 16, TB + 20
-ART_LH = 360 / max(h, 1)                            # portrait height
+ART_X, ART_Y0 = 18, TB + 18
+ART_W = 468                                         # bigger portrait
+ART_LH = (ART_W * 360 / 410) / max(h, 1)            # keep the slimmed face aspect
 ART_FS = ART_LH * 0.92
-ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
-                                                    # so a slight slim makes the face look correct
-RX = 460                                            # right column x
+RX = 512                                            # right column x (portrait grew)
 NOTE_END = W - 26
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
@@ -206,34 +205,31 @@ TITLEBAR = (
 # ---- left: caption + "right now" bars under the portrait ----
 CAP = "not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@"
 BARS = [("building", 90), ("learning", 65), ("sleeping", 15)]
-BAR_N = 28
+BAR_N = 42
 left = [
-    # subtle panels behind the caption and the status block
-    f'<rect x="14" y="438" width="412" height="20" rx="4" fill="#0c1016" opacity="0">{fade(T_NAME)}</rect>',
-    f'<rect x="14" y="466" width="412" height="86" rx="6" fill="#0b0e13" opacity="0">{fade(T_NAME + 0.1)}</rect>',
-    f'<text x="20" y="452" font-size="9.5" fill="#6b7480" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
-    f'<text x="24" y="486" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
+    f'<text x="20" y="502" font-size="10" fill="#aeb6c0" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
+    f'<text x="20" y="528" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
 ]
 for i, (label, pct) in enumerate(BARS):
-    y = 508 + i * 22
+    y = 550 + i * 21
     t0 = T_NAME + 0.3 + i * 0.2
     filled = round(pct * BAR_N / 100)
     fw = filled * BAR_CW
     left.append(
         f'<g opacity="0"><animate attributeName="opacity" begin="{t0:.2f}s" dur="0.35s" from="0" to="1" fill="freeze"/>'
-        f'<text x="24" y="{y}" font-size="12" fill="#8b949e" textLength="72" lengthAdjust="spacingAndGlyphs">{label}</text>'
-        f'<text x="108" y="{y}" font-size="12" fill="#242a33" textLength="{BAR_N * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"▏" * BAR_N}</text>'
-        f'<clipPath id="bf{i}"><rect x="108" y="{y - 12}" width="0" height="16">'
+        f'<text x="22" y="{y}" font-size="12" fill="#8b949e" textLength="72" lengthAdjust="spacingAndGlyphs">{label}</text>'
+        f'<text x="112" y="{y}" font-size="12" fill="#242a33" textLength="{BAR_N * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"▏" * BAR_N}</text>'
+        f'<clipPath id="bf{i}"><rect x="112" y="{y - 12}" width="0" height="16">'
         f'<animate attributeName="width" from="0" to="{fw + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
         f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
-        f'<text x="108" y="{y}" font-size="12" fill="#f97316" clip-path="url(#bf{i})" '
+        f'<text x="112" y="{y}" font-size="12" fill="#f97316" clip-path="url(#bf{i})" '
         f'textLength="{fw:.0f}" lengthAdjust="spacingAndGlyphs">{"▎" * filled}</text>'
-        f'<text x="418" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
+        f'<text x="{ART_X + ART_W}" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
         f'font-variant-numeric="tabular-nums">{pct}%</text></g>'
     )
 
 # ---- right: name, subtitle, toolchain, plan ----
-divider = f'<rect x="440" y="{TB + 18}" width="1" height="{H - TB - 54}" fill="#21262d"/>'
+divider = f'<rect x="{RX - 22}" y="{TB + 18}" width="1" height="{H - TB - 54}" fill="#21262d"/>'
 
 name = (
     f'<g opacity="0">{fade(T_NAME)}'
@@ -247,7 +243,7 @@ name = (
 )
 
 # toolchain: bordered box with a notched label, brand icons + captions
-BX, BY, BW, BH = RX, 178, 505, 96
+BX, BY, BW, BH = RX, 174, W - RX - 16, 94
 def icon(d, cx, cy, size=21, fill="#c9d1d9"):
     s = size / 24
     return (f'<g transform="translate({cx - size / 2:.1f},{cy - size / 2:.1f}) scale({s:.4f})">'
@@ -276,22 +272,21 @@ def stat(key, val, x, y, chars=27):
             f'<tspan fill="#2d333b"> {"." * n} </tspan>'
             f'<tspan fill="#e6edf3">{escape(str(val))}</tspan></text>')
 
-GC = RX + 262   # right stat column
+GC = RX + 232   # right stat column
 stats = (
     f'<g opacity="0">{fade(T_NAME + 0.9)}'
-    f'<text x="{RX}" y="308" font-size="13" letter-spacing="1">'
+    f'<text x="{RX}" y="312" font-size="13" letter-spacing="1">'
     f'<tspan fill="#f97316">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
-    f'<line x1="{RX + 128}" y1="304" x2="{RX + 495}" y2="304" stroke="#21262d"/>'
-    f'{stat("Repos", STATS["repos"], RX, 340)}{stat("Joined", STATS["joined"], GC, 340)}'
-    f'{stat("Stars", STATS["stars"], RX, 364)}{stat("Followers", STATS["followers"], GC, 364)}'
+    f'<line x1="{RX + 128}" y1="308" x2="{W - 16}" y2="308" stroke="#21262d"/>'
+    f'{stat("Repos", STATS["repos"], RX, 346, chars=24)}{stat("Joined", STATS["joined"], GC, 346, chars=24)}'
     f'</g>'
 )
 
 plan = (
-    f'<text x="{RX}" y="424" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="416" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
-    f'<text x="{RX}" y="454" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
-    f'<text x="{RX}" y="512" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="446" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
+    f'<text x="{RX}" y="530" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
 )
 
