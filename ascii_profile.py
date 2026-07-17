@@ -194,8 +194,8 @@ def blink(color):
 
 # ---- window chrome ----
 TITLEBAR = (
-    f'<path d="M0 15 A15 15 0 0 1 15 0 H{W - 15} A15 15 0 0 1 {W} 15 V{TB} H0 Z" fill="#0d1117"/>'
-    f'<line x1="0" y1="{TB}" x2="{W}" y2="{TB}" stroke="#21262d" stroke-width="1"/>'
+    f'<path d="M0 15 A15 15 0 0 1 15 0 H{W - 15} A15 15 0 0 1 {W} 15 V{TB} H0 Z" fill="#0a0a0a"/>'
+    f'<line x1="0" y1="{TB}" x2="{W}" y2="{TB}" stroke="#2a2a2a" stroke-width="1"/>'
     f'<circle cx="26" cy="23" r="6" fill="#ff5f56"/>'
     f'<circle cx="46" cy="23" r="6" fill="#febc2e"/>'
     f'<circle cx="66" cy="23" r="6" fill="#28c840"/>'
@@ -229,7 +229,7 @@ for i, (label, pct) in enumerate(BARS):
     )
 
 # ---- right: name, subtitle, toolchain, plan ----
-divider = f'<rect x="{RX - 22}" y="{TB + 18}" width="1" height="{H - TB - 54}" fill="#21262d"/>'
+divider = f'<rect x="{RX - 22}" y="{TB + 18}" width="1" height="{H - TB - 54}" fill="#2a2a2a"/>'
 
 name = (
     f'<g opacity="0">{fade(T_NAME)}'
@@ -251,8 +251,8 @@ def icon(d, cx, cy, size=21, fill="#c9d1d9"):
 
 tool = [
     f'<g opacity="0">{fade(T_NAME + 0.4)}'
-    f'<rect x="{BX}" y="{BY}" width="{BW}" height="{BH}" rx="8" fill="none" stroke="#21262d"/>'
-    f'<rect x="{BX + 16}" y="{BY - 7}" width="86" height="14" fill="#010409"/>'
+    f'<rect x="{BX}" y="{BY}" width="{BW}" height="{BH}" rx="8" fill="none" stroke="#2a2a2a"/>'
+    f'<rect x="{BX + 16}" y="{BY - 7}" width="86" height="14" fill="#000000"/>'
     f'<text x="{BX + 22}" y="{BY + 3}" font-size="10" letter-spacing="1.5" fill="#6e7681">// TOOLCHAIN</text>'
 ]
 for i, ic in enumerate(ICONS):
@@ -277,7 +277,7 @@ stats = (
     f'<g opacity="0">{fade(T_NAME + 0.9)}'
     f'<text x="{RX}" y="312" font-size="13" letter-spacing="1">'
     f'<tspan fill="#f97316">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
-    f'<line x1="{RX + 128}" y1="308" x2="{W - 16}" y2="308" stroke="#21262d"/>'
+    f'<line x1="{RX + 128}" y1="308" x2="{W - 16}" y2="308" stroke="#2a2a2a"/>'
     f'{stat("Repos", STATS["repos"], RX, 346, chars=24)}{stat("Joined", STATS["joined"], GC, 346, chars=24)}'
     f'</g>'
 )
@@ -286,8 +286,8 @@ plan = (
     f'<text x="{RX}" y="416" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
     f'<text x="{RX}" y="446" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
-    f'<text x="{RX}" y="530" font-size="13" opacity="0">'
-    f'<tspan fill="#f97316">$</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
+    f'<text x="{RX}" y="486" font-size="13" opacity="0">'
+    f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
 )
 
 BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + stats + plan
@@ -313,7 +313,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   .g2 {{ fill: #f0f3f6; }}
   .g1 {{ fill: #97a1ad; }}
 </style>
-<rect width="{W}" height="{H}" fill="#010409" rx="15"/>
+<rect width="{W}" height="{H}" fill="#000000" rx="15"/>
 <defs>
   <clipPath id="reveal">
     <rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{h * ART_LH + 24:.0f}">
