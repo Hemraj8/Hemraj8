@@ -234,7 +234,7 @@ divider = f'<rect x="{RX - 22}" y="{TB + 18}" width="1" height="{H - TB - 54}" f
 name = (
     f'<g opacity="0">{fade(T_NAME)}'
     f'<text x="{RX}" y="118" font-size="30" font-weight="bold" letter-spacing="2">'
-    f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan>{blink("#f97316")}</text>'
+    f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan></text>'
     f'<text x="{RX + 2}" y="148" font-size="13" letter-spacing="2">'
     + '<tspan fill="#f97316"> · </tspan>'.join(
         f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER", "PROBLEM SOLVER")
@@ -283,34 +283,37 @@ stats = (
 )
 
 plan = (
-    f'<text x="{RX}" y="406" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="414" font-size="14" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
-    f'<text x="{RX}" y="436" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
-    f'<text x="{RX}" y="476" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="448" font-size="14" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
+    f'<text x="{RX}" y="498" font-size="17" font-weight="bold" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
 )
 
-# ---- contact buttons: inside the terminal, under the plan (mirrors make_buttons.py) ----
+# ---- contact buttons: inside the terminal, under the plan ----
+# left-aligned to RX, right-aligned to the toolchain box's right edge (W - 16)
 BTN_ICONS = json.load(open("btn_icons.json"))
-BTN_H = 40
-BTN_Y = 512
+BTN_H = 44
+BTN_Y = 540
 
 def envelope(color):
     return (f'<rect x="1.5" y="4" width="21" height="16" rx="2" fill="none" stroke="{color}" stroke-width="2"/>'
             f'<path d="M2 6 L12 13 L22 6" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round"/>')
 
 def btn(x, label, icon_svg, color, text_color):
-    bw = 44 + int(len(label) * 8.4) + 20
+    bw = 48 + int(len(label) * 9.2) + 22
     g = (f'<g transform="translate({x:.0f},{BTN_Y})">'
          f'<rect x="1" y="1" width="{bw - 2}" height="{BTN_H - 2}" rx="7" fill="#0a0a0a" stroke="{color}" stroke-width="1.2"/>'
-         f'<g transform="translate(15,{BTN_H / 2 - 8}) scale(0.667)">{icon_svg}</g>'
-         f'<text x="42" y="{BTN_H / 2 + 4:.0f}" font-size="12" letter-spacing="1.5" fill="{text_color}" font-weight="bold">{label}</text>'
+         f'<g transform="translate(16,{BTN_H / 2 - 9}) scale(0.75)">{icon_svg}</g>'
+         f'<text x="46" y="{BTN_H / 2 + 5:.0f}" font-size="13" letter-spacing="1.5" fill="{text_color}" font-weight="bold">{label}</text>'
          f'</g>')
     return g, bw
 
 ORANGE = "#f97316"
 email_btn, ew = btn(RX, "EMAIL", envelope(ORANGE), ORANGE, ORANGE)
-li_btn, _ = btn(RX + ew + 14, "LINKEDIN",
+lw = 48 + int(len("LINKEDIN") * 9.2) + 22
+li_x = (W - 16) - lw
+li_btn, _ = btn(li_x, "LINKEDIN",
                 f'<path d="{BTN_ICONS["linkedin"]}" fill="#c9d1d9"/>', "#30363d", "#8b949e")
 buttons = f'<g opacity="0">{fade(T_NAME + 2.0)}{email_btn}{li_btn}</g>'
 
@@ -356,8 +359,9 @@ def write_svg(fname, vx, vy, vw, vh, content):
 # The card is served as 1 full-width image plus a bottom strip of 3 flush
 # slices so each button can carry its own link (SVGs inside <img> can't).
 # CUT falls on an all-black band; slice edges fall on black columns.
-CUT = 506
-EB0, EB1 = RX - 10, RX + ew + 8                # email slice x-range
+CUT = 524
+EB0 = RX - 10                                  # email slice x-range
+EB1 = round((RX + ew + li_x) / 2)              # midpoint of the button gap
 write_svg("profile.svg", 0, 0, W, H, CONTENT_FULL)
 write_svg("profile_top.svg", 0, 0, W, CUT, CONTENT_FULL)
 write_svg("strip_bars.svg", 0, CUT, EB0, H - CUT, CONTENT_STRIP)
