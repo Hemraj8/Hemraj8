@@ -16,27 +16,13 @@
 
 <br/>
 
-## git log --author="hemraj"
+## cat .plan
 
-**`a3f9c21`** — feat: another thing shipped
+**building** — systems that don't fall over: load balancers, k8s operators, ml pipelines
 
-**`9b2e871`** — fix: broke it better this time
+**breaking** — things, on purpose, to see why they worked
 
-**`7d1c440`** — refactor: chaos → infrastructure
-
-**`5e8fa02`** — perf: edge → cloud, no layovers
-
-**`1a0b3f5`** — init: builder mode, no exit condition
-
-<br/>
-
-## git status
-
-> on branch **main** — ahead of `origin/sleep` by 47 commits
->
-> **currently building** · systems that don't fall over — load balancers, k8s operators, ml pipelines
->
-> **currently breaking** · things, on purpose, to see why they worked
+**next** — whatever survives contact with production
 
 <br/>
 
