@@ -141,17 +141,20 @@ for cy in range(h):
     art_lines.append(runs)
 
 # ---------- 3. layout: a terminal window ----------
-# window chrome (traffic-light dots + titlebar), portrait + name on the left,
-# a real shell session ($ cmd -> output) on the right, one orange accent.
-W, H = 880, 560
+# mac chrome; left = portrait + caption + "right now" bars;
+# right = big name, toolchain icon rack, live plan. one orange accent.
+import json
+ICONS = json.load(open("tool_icons.json"))
+
+W, H = 980, 560
 TB = 46                                             # titlebar height
-ART_X, ART_Y0 = 16, TB + 24
-ART_LH = 380 / max(h, 1)                            # portrait height
+ART_X, ART_Y0 = 16, TB + 20
+ART_LH = 360 / max(h, 1)                            # portrait height
 ART_FS = ART_LH * 0.92
 ART_W = 410                                         # ~7% under true aspect: monospace runs read wide,
                                                     # so a slight slim makes the face look correct
-RX = 470                                            # right column (shell session) x
-NOTE_END = W - 28                                   # right rail for bar annotations
+RX = 460                                            # right column x
+NOTE_END = W - 26
 
 REVEAL_T0 = 0.3    # sketch-draw of the portrait starts
 REVEAL_DUR = 2.2   # ...and takes this long to sweep left-to-right
@@ -161,81 +164,91 @@ BAR_CW = 7.2       # char width at font-size 12
 def fade(t):
     return f'<animate attributeName="opacity" begin="{t:.2f}s" dur="0.4s" from="0" to="1" fill="freeze"/>'
 
-def cmd(command, y, t):
-    """a typed shell command: orange $ prompt, bright command text"""
-    return (f'<text x="{RX}" y="{y}" font-size="12.5" opacity="0">'
-            f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> {escape(command)}</tspan>{fade(t)}</text>')
+def blink(color):
+    return (f'<tspan fill="{color}">▊<animate attributeName="fill-opacity" '
+            f'values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1.1s" repeatCount="indefinite"/></tspan>')
 
-def out_dotted(items, y, t):
-    """command output: values separated by dim middots"""
-    spans = '<tspan fill="#484f58"> · </tspan>'.join(
-        f'<tspan fill="#8b949e">{escape(it)}</tspan>' for it in items
-    )
-    return f'<text x="{RX}" y="{y}" font-size="12.5" opacity="0">{spans}{fade(t)}</text>'
-
-# ---- window chrome: traffic lights + titlebar ----
+# ---- window chrome ----
 TITLEBAR = (
     f'<path d="M0 15 A15 15 0 0 1 15 0 H{W - 15} A15 15 0 0 1 {W} 15 V{TB} H0 Z" fill="#0d1117"/>'
     f'<line x1="0" y1="{TB}" x2="{W}" y2="{TB}" stroke="#21262d" stroke-width="1"/>'
     f'<circle cx="26" cy="23" r="6" fill="#ff5f56"/>'
     f'<circle cx="46" cy="23" r="6" fill="#febc2e"/>'
     f'<circle cx="66" cy="23" r="6" fill="#28c840"/>'
-    f'<text x="{W/2:.0f}" y="27" text-anchor="middle" font-size="12" fill="#6e7681">hemraj@sodisetti — -zsh — 92×30</text>'
+    f'<text x="{W/2:.0f}" y="27" text-anchor="middle" font-size="12" fill="#6e7681">hemraj@sodisetti — -zsh — 96×30</text>'
 )
 
-# ---- left: name block under the portrait ----
-SUBTITLE = '<tspan fill="#f97316"> · </tspan>'.join(
-    f'<tspan fill="#8b949e">{s}</tspan>' for s in ("systems engineer", "builder")
-)
-NAME_SVG = (
-    f'<g opacity="0">{fade(T_NAME)}'
-    f'<text x="18" y="500" font-size="17" fill="#f97316">&gt;</text>'
-    f'<text x="42" y="500" font-size="17" letter-spacing="5" fill="#f0f3f6">HEMRAJ SODISETTI</text>'
-    f'<text x="42" y="524" font-size="12" letter-spacing="1">{SUBTITLE}</text>'
-    f'</g>'
-)
-
-# ---- right: a live shell session ----
-BARS = [
-    ("building", 9, "systems that don't fall over"),
-    ("learning", 7, "whatever the problem demands"),
-    ("sleeping", 2, "overrated anyway"),
+# ---- left: caption + "right now" bars under the portrait ----
+CAP = "not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@"
+BARS = [("building", 90), ("learning", 65), ("sleeping", 15)]
+BAR_N = 28
+left = [
+    f'<text x="20" y="450" font-size="9.5" fill="#565f6b" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
+    f'<text x="20" y="478" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
 ]
-session = [
-    f'<rect x="446" y="{TB + 18}" width="1" height="{H - TB - 56}" fill="#21262d"/>',   # pane divider
-    cmd("./status --now", 104, T_NAME + 0.2),
-]
-for i, (label, fill, note) in enumerate(BARS):
-    y = 134 + i * 25
-    t0 = T_NAME + 0.4 + i * 0.22
-    fill_w = fill * BAR_CW
-    session.append(
-        f'<g opacity="0">'
-        f'<animate attributeName="opacity" begin="{t0:.2f}s" dur="0.35s" from="0" to="1" fill="freeze"/>'
-        f'<text x="{RX + 12}" y="{y}" font-size="12" fill="#8b949e" textLength="{len(label) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{label}</text>'
-        f'<text x="{RX + 100}" y="{y}" font-size="12" fill="#2d333b" textLength="{10 * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"░" * 10}</text>'
-        f'<clipPath id="barfill{i}"><rect x="{RX + 100}" y="{y - 12}" width="0" height="16">'
-        f'<animate attributeName="width" from="0" to="{fill_w + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
+for i, (label, pct) in enumerate(BARS):
+    y = 502 + i * 22
+    t0 = T_NAME + 0.3 + i * 0.2
+    filled = round(pct * BAR_N / 100)
+    fw = filled * BAR_CW
+    left.append(
+        f'<g opacity="0"><animate attributeName="opacity" begin="{t0:.2f}s" dur="0.35s" from="0" to="1" fill="freeze"/>'
+        f'<text x="20" y="{y}" font-size="12" fill="#8b949e" textLength="72" lengthAdjust="spacingAndGlyphs">{label}</text>'
+        f'<text x="104" y="{y}" font-size="12" fill="#242a33" textLength="{BAR_N * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{"▏" * BAR_N}</text>'
+        f'<clipPath id="bf{i}"><rect x="104" y="{y - 12}" width="0" height="16">'
+        f'<animate attributeName="width" from="0" to="{fw + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
         f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
-        f'<text x="{RX + 100}" y="{y}" font-size="12" fill="#f97316" clip-path="url(#barfill{i})" '
-        f'textLength="{fill_w:.0f}" lengthAdjust="spacingAndGlyphs">{"▓" * fill}</text>'
-        f'<text x="{NOTE_END}" y="{y}" font-size="12" fill="#6e7681" text-anchor="end" '
-        f'textLength="{len(note) * BAR_CW:.0f}" lengthAdjust="spacingAndGlyphs">{escape(note)}</text>'
-        f'</g>'
+        f'<text x="104" y="{y}" font-size="12" fill="#f97316" clip-path="url(#bf{i})" '
+        f'textLength="{fw:.0f}" lengthAdjust="spacingAndGlyphs">{"▎" * filled}</text>'
+        f'<text x="{ART_X + ART_W}" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
+        f'font-variant-numeric="tabular-nums">{pct}%</text></g>'
     )
-session += [
-    cmd("cat ~/stack", 262, T_NAME + 1.15),
-    out_dotted(["rust", "go", "python", "c++", "cuda"], 290, T_NAME + 1.3),
-    out_dotted(["aws", "gcp", "k8s", "docker", "pytorch"], 314, T_NAME + 1.45),
-    cmd("tail -1 ~/.plan", 386, T_NAME + 1.65),
-    f'<text x="{RX}" y="414" font-size="12.5" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.8)}</text>',
-    # live prompt with a blinking cursor
-    f'<g opacity="0">{fade(T_NAME + 2.0)}'
-    f'<text x="{RX}" y="474" font-size="12.5"><tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> </tspan>'
-    f'<tspan fill="#e6edf3">▊<animate attributeName="fill-opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1.1s" repeatCount="indefinite"/></tspan></text>'
-    f'</g>',
+
+# ---- right: name, subtitle, toolchain, plan ----
+divider = f'<rect x="440" y="{TB + 18}" width="1" height="{H - TB - 54}" fill="#21262d"/>'
+
+name = (
+    f'<g opacity="0">{fade(T_NAME)}'
+    f'<text x="{RX}" y="118" font-size="30" font-weight="bold" letter-spacing="2">'
+    f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan>{blink("#f97316")}</text>'
+    f'<text x="{RX + 2}" y="148" font-size="13" letter-spacing="2">'
+    + '<tspan fill="#f97316"> · </tspan>'.join(
+        f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER")
+    )
+    + '</text></g>'
+)
+
+# toolchain: bordered box with a notched label, brand icons + captions
+BX, BY, BW, BH = RX, 178, 505, 96
+def icon(d, cx, cy, size=21, fill="#c9d1d9"):
+    s = size / 24
+    return (f'<g transform="translate({cx - size / 2:.1f},{cy - size / 2:.1f}) scale({s:.4f})">'
+            f'<path d="{d}" fill="{fill}"/></g>')
+
+tool = [
+    f'<g opacity="0">{fade(T_NAME + 0.4)}'
+    f'<rect x="{BX}" y="{BY}" width="{BW}" height="{BH}" rx="8" fill="none" stroke="#21262d"/>'
+    f'<rect x="{BX + 16}" y="{BY - 7}" width="86" height="14" fill="#010409"/>'
+    f'<text x="{BX + 22}" y="{BY + 3}" font-size="10" letter-spacing="1.5" fill="#6e7681">// TOOLCHAIN</text>'
 ]
-BARS_SVG = TITLEBAR + NAME_SVG + "".join(session)
+for i, ic in enumerate(ICONS):
+    cx = BX + 20 + (BW - 40) / len(ICONS) * (i + 0.5)
+    tool.append(icon(ic["d"], cx, BY + 40))
+    tool.append(
+        f'<text x="{cx:.0f}" y="{BY + 72}" text-anchor="middle" font-size="7.5" '
+        f'letter-spacing="0.5" fill="#6e7681">{escape(ic["label"])}</text>'
+    )
+tool.append('</g>')
+
+plan = (
+    f'<text x="{RX}" y="376" font-size="13" opacity="0">'
+    f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.2)}</text>'
+    f'<text x="{RX}" y="406" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.35)}</text>'
+    f'<text x="{RX}" y="490" font-size="13" opacity="0">'
+    f'<tspan fill="#f97316">$</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.6)}</text>'
+)
+
+BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + plan
 
 # ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
