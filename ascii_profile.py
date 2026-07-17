@@ -283,17 +283,17 @@ stats = (
 )
 
 plan = (
-    f'<text x="{RX}" y="444" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="406" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
-    f'<text x="{RX}" y="474" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
-    f'<text x="{RX}" y="514" font-size="13" opacity="0">'
+    f'<text x="{RX}" y="436" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
+    f'<text x="{RX}" y="476" font-size="13" opacity="0">'
     f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
 )
 
 # ---- contact buttons: inside the terminal, under the plan (mirrors make_buttons.py) ----
 BTN_ICONS = json.load(open("btn_icons.json"))
 BTN_H = 40
-BTN_Y = 552
+BTN_Y = 512
 
 def envelope(color):
     return (f'<rect x="1.5" y="4" width="21" height="16" rx="2" fill="none" stroke="{color}" stroke-width="2"/>'
@@ -331,28 +331,37 @@ for i, runs in enumerate(art_lines):
         f'textLength="{ART_W}" lengthAdjust="spacingAndGlyphs">{spans}</text>'
     )
 
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Consolas, 'Fira Code', Menlo, monospace">
-<style>
-  text, tspan {{ white-space: pre; }}
-  .g2 {{ fill: #f0f3f6; }}
-  .g1 {{ fill: #97a1ad; }}
-</style>
-<rect width="{W}" height="{H}" fill="#000000" rx="15"/>
-<defs>
-  <clipPath id="reveal">
-    <rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{h * ART_LH + 24:.0f}">
-      <animate attributeName="width" from="0" to="{ART_W + 12}"
-        begin="{REVEAL_T0}s" dur="{REVEAL_DUR}s" fill="freeze"/>
-    </rect>
-  </clipPath>
-</defs>
-<g clip-path="url(#reveal)">
-{"".join(art_svg)}
-</g>
-{BARS_SVG}
-</svg>
-'''
+STYLE = ('<style> text, tspan { white-space: pre; } '
+         '.g2 { fill: #f0f3f6; } .g1 { fill: #97a1ad; } </style>')
+BG = f'<rect width="{W}" height="{H}" fill="#000000" rx="15"/>'
+ART_GROUP = (
+    f'<defs><clipPath id="reveal">'
+    f'<rect x="{ART_X - 4}" y="{ART_Y0 - 16}" width="0" height="{h * ART_LH + 24:.0f}">'
+    f'<animate attributeName="width" from="0" to="{ART_W + 12}" '
+    f'begin="{REVEAL_T0}s" dur="{REVEAL_DUR}s" fill="freeze"/></rect>'
+    f'</clipPath></defs>'
+    f'<g clip-path="url(#reveal)">{"".join(art_svg)}</g>'
+)
+CONTENT_FULL = STYLE + BG + ART_GROUP + BARS_SVG
+CONTENT_STRIP = STYLE + BG + BARS_SVG          # slices below the art don't need it
 
-with open("profile.svg", "w") as f:
-    f.write(svg)
-print(f"profile.svg written, {len(svg)/1024:.0f} KB, art {len(art_lines)} lines x {w} cols")
+def write_svg(fname, vx, vy, vw, vh, content):
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{vw}" height="{vh}" '
+           f'viewBox="{vx} {vy} {vw} {vh}" '
+           f"font-family=\"Consolas, 'Fira Code', Menlo, monospace\">{content}</svg>")
+    with open(fname, "w") as f:
+        f.write(svg)
+    print(f"{fname} written, {len(svg)/1024:.0f} KB")
+
+# The card is served as 1 full-width image plus a bottom strip of 3 flush
+# slices so each button can carry its own link (SVGs inside <img> can't).
+# CUT falls on an all-black band; slice edges fall on black columns.
+CUT = 506
+EB0, EB1 = RX - 10, RX + ew + 8                # email slice x-range
+write_svg("profile.svg", 0, 0, W, H, CONTENT_FULL)
+write_svg("profile_top.svg", 0, 0, W, CUT, CONTENT_FULL)
+write_svg("strip_bars.svg", 0, CUT, EB0, H - CUT, CONTENT_STRIP)
+write_svg("strip_email.svg", EB0, CUT, EB1 - EB0, H - CUT, CONTENT_STRIP)
+write_svg("strip_linkedin.svg", EB1, CUT, W - EB1, H - CUT, CONTENT_STRIP)
+print(f"art {len(art_lines)} lines x {w} cols; strip widths "
+      + ", ".join(f"{sw}/{W} = {sw / W * 100:.2f}%" for sw in (EB0, EB1 - EB0, W - EB1)))
