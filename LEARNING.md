@@ -49,3 +49,34 @@ python3 ascii_profile.py                                   # rewrites all SVGs
 ```
 Then commit + push (GitHub serves the SVGs from `main`), and keep the README
 `?v=` bump so the change actually shows.
+
+---
+
+## Polish pass: bigger type + even vertical rhythm
+
+**What we changed**
+- Bumped every font ~12% (name 26→29, body 13→14.5, etc.) for readability.
+- Removed the block-cursor next to the name — it's static now.
+- **Key fix for the bottom gap:** instead of block-shifting the right column
+  down, each section (name → toolchain → stats → plan → buttons) is now spaced
+  individually so the column grows tall enough to fill top-to-bottom. The name
+  sits high again and the buttons reach the bottom edge, level with the left bars.
+- Divider extended to ~y620 and made slightly thicker/lighter (1→1.3, #2e2e2e).
+- Borders more defined: toolchain box 1→1.6px (#3a3a3a), buttons 1.2→1.6px.
+- Because the button font grew, its width changed, so the strip slice widths
+  shifted (email 12.65%→13.67%, linkedin 36.12%→35.10%) — the README `width=`
+  values had to be updated to match, or the clickable buttons misalign.
+- Moved the strip `CUT` to y538, threading the black gap between the caption and
+  "// right now" so the profile_top/strip seam doesn't slice through any text.
+
+**The gotcha worth remembering**
+The bottom of the card is served as one wide image (`profile_top`) stacked on
+three side-by-side slices (`strip_*`). Two invariants must hold or it breaks:
+(1) the strip widths as %-of-980 must equal each slice's native-width/980 (so all
+slices scale to the same height and line up), and (2) `CUT` must land on a row
+that is black in **both** columns (no text crossing it). Any change to button
+size or the plan/bars vertical positions can violate these — re-check both.
+
+**The one-sentence why**
+"I spread the right-hand sections to fill the column instead of shoving them
+down, so the layout balances top-to-bottom with no dead space under the buttons."
