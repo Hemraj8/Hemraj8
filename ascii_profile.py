@@ -205,10 +205,11 @@ TITLEBAR = (
 # ---- left: caption + "right now" bars under the portrait ----
 CAP = "not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@"
 BARS = [("building", 90), ("learning", 65), ("sleeping", 15)]
-BAR_N = 42
+BAR_N = 46          # more segments = longer bars (proportions unchanged: fill is still pct% of BAR_N)
+PCT_X = ART_X + ART_W - 10   # percentage value sits ~10px left of the portrait edge, tight to the bar
 left = [
     f'<text x="20" y="528" font-size="10" fill="#aeb6c0" opacity="0">{escape(CAP)}{fade(T_NAME)}</text>',
-    f'<text x="20" y="554" font-size="11" fill="#6e7681" opacity="0">// right now{fade(T_NAME + 0.15)}</text>',
+    f'<text x="20" y="554" font-size="11" opacity="0"><tspan fill="#B08D57">//</tspan><tspan fill="#6e7681"> right now</tspan>{fade(T_NAME + 0.15)}</text>',
 ]
 for i, (label, pct) in enumerate(BARS):
     y = 576 + i * 21
@@ -222,22 +223,26 @@ for i, (label, pct) in enumerate(BARS):
         f'<clipPath id="bf{i}"><rect x="112" y="{y - 12}" width="0" height="16">'
         f'<animate attributeName="width" from="0" to="{fw + 1:.0f}" begin="{t0 + 0.15:.2f}s" dur="0.7s" '
         f'calcMode="spline" keySplines="0.2 0.7 0.3 1" fill="freeze"/></rect></clipPath>'
-        f'<text x="112" y="{y}" font-size="12" fill="#f97316" clip-path="url(#bf{i})" '
+        f'<text x="112" y="{y}" font-size="12" fill="#B08D57" clip-path="url(#bf{i})" '
         f'textLength="{fw:.0f}" lengthAdjust="spacingAndGlyphs">{"▎" * filled}</text>'
-        f'<text x="{ART_X + ART_W}" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
+        f'<text x="{PCT_X}" y="{y}" font-size="12" fill="#c9d1d9" text-anchor="end" '
         f'font-variant-numeric="tabular-nums">{pct}%</text></g>'
     )
 
 # ---- right: name, subtitle, toolchain, plan ----
-divider = f'<rect x="{RX - 22}" y="{TB + 18}" width="1" height="{H - TB - 54}" fill="#2a2a2a"/>'
+# extend the divider down to ~y610 so it reaches past the last "right now" bar
+# and balances the two columns instead of stopping halfway down.
+divider = f'<rect x="{RX - 22}" y="{TB + 18}" width="1" height="{H - TB - 32}" fill="#2a2a2a"/>'
 
 name = (
     f'<g opacity="0">{fade(T_NAME)}'
-    f'<text x="{RX}" y="118" font-size="30" font-weight="bold" letter-spacing="2">'
-    f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan>{blink("#f97316")}</text>'
-    f'<text x="{RX + 2}" y="148" font-size="13" letter-spacing="2">'
-    + '<tspan fill="#f97316"> · </tspan>'.join(
-        f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER", "PROBLEM SOLVER")
+    # medium weight + smaller size so the name reads as a terminal title line,
+    # not a marketing hero. Bronze block-cursor blinks right after it.
+    f'<text x="{RX}" y="118" font-size="26" font-weight="500" letter-spacing="3">'
+    f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan>{blink("#B08D57")}</text>'
+    f'<text x="{RX + 2}" y="148" font-size="12.5" letter-spacing="2.5">'
+    + '<tspan fill="#B08D57"> · </tspan>'.join(
+        f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER")
     )
     + '</text></g>'
 )
@@ -253,7 +258,7 @@ tool = [
     f'<g opacity="0">{fade(T_NAME + 0.4)}'
     f'<rect x="{BX}" y="{BY}" width="{BW}" height="{BH}" rx="8" fill="none" stroke="#2a2a2a"/>'
     f'<rect x="{BX + 16}" y="{BY - 7}" width="86" height="14" fill="#000000"/>'
-    f'<text x="{BX + 22}" y="{BY + 3}" font-size="10" letter-spacing="1.5" fill="#6e7681">// TOOLCHAIN</text>'
+    f'<text x="{BX + 22}" y="{BY + 3}" font-size="10" letter-spacing="1.5"><tspan fill="#B08D57">//</tspan><tspan fill="#6e7681"> TOOLCHAIN</tspan></text>'
 ]
 for i, ic in enumerate(ICONS):
     cx = BX + 20 + (BW - 40) / len(ICONS) * (i + 0.5)
@@ -268,7 +273,7 @@ tool.append('</g>')
 def stat(key, val, x, y, chars=27):
     n = max(chars - len(key) - len(str(val)) - 2, 2)
     return (f'<text x="{x}" y="{y}" font-size="13">'
-            f'<tspan fill="#f97316">{escape(key)}</tspan>'
+            f'<tspan fill="#B08D57">{escape(key)}</tspan>'
             f'<tspan fill="#2d333b"> {"." * n} </tspan>'
             f'<tspan fill="#e6edf3">{escape(str(val))}</tspan></text>')
 
@@ -276,7 +281,7 @@ GC = RX + 232   # right stat column
 stats = (
     f'<g opacity="0">{fade(T_NAME + 0.9)}'
     f'<text x="{RX}" y="322" font-size="13" letter-spacing="1">'
-    f'<tspan fill="#f97316">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
+    f'<tspan fill="#B08D57">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
     f'<line x1="{RX + 128}" y1="318" x2="{W - 16}" y2="318" stroke="#2a2a2a"/>'
     f'{stat("Repos", STATS["repos"], RX, 356, chars=24)}{stat("Joined", STATS["joined"], GC, 356, chars=24)}'
     f'</g>'
@@ -284,10 +289,10 @@ stats = (
 
 plan = (
     f'<text x="{RX}" y="406" font-size="13" opacity="0">'
-    f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
+    f'<tspan fill="#B08D57">$</tspan><tspan fill="#e6edf3"> tail -1 ~/.plan</tspan>{fade(T_NAME + 1.4)}</text>'
     f'<text x="{RX}" y="436" font-size="13" fill="#8b949e" opacity="0">tools change. shipping doesn\'t.{fade(T_NAME + 1.55)}</text>'
     f'<text x="{RX}" y="476" font-size="13" opacity="0">'
-    f'<tspan fill="#f97316">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#e6edf3")}{fade(T_NAME + 1.8)}</text>'
+    f'<tspan fill="#B08D57">$</tspan><tspan fill="#e6edf3"> open a PR</tspan> {blink("#B08D57")}{fade(T_NAME + 1.8)}</text>'
 )
 
 # ---- contact buttons: inside the terminal, under the plan (mirrors make_buttons.py) ----
@@ -304,17 +309,22 @@ def btn(x, label, icon_svg, color, text_color):
     g = (f'<g transform="translate({x:.0f},{BTN_Y})">'
          f'<rect x="1" y="1" width="{bw - 2}" height="{BTN_H - 2}" rx="7" fill="#0a0a0a" stroke="{color}" stroke-width="1.2"/>'
          f'<g transform="translate(15,{BTN_H / 2 - 8}) scale(0.667)">{icon_svg}</g>'
-         f'<text x="42" y="{BTN_H / 2 + 4:.0f}" font-size="12" letter-spacing="1.5" fill="{text_color}" font-weight="bold">{label}</text>'
+         f'<text x="42" y="{BTN_H / 2 + 4:.0f}" font-size="12" letter-spacing="1.5" fill="{text_color}" font-weight="500">{label}</text>'
          f'</g>')
     return g, bw
 
-ORANGE = "#f97316"
-email_btn, ew = btn(RX, "EMAIL", envelope(ORANGE), ORANGE, ORANGE)
+# One muted-bronze accent, defined once, used for every gold touch on the card.
+GOLD = "#B08D57"
+email_btn, ew = btn(RX, "EMAIL", envelope(GOLD), GOLD, GOLD)
 li_btn, _ = btn(RX + ew + 14, "LINKEDIN",
                 f'<path d="{BTN_ICONS["linkedin"]}" fill="#c9d1d9"/>', "#30363d", "#8b949e")
 buttons = f'<g opacity="0">{fade(T_NAME + 2.0)}{email_btn}{li_btn}</g>'
 
-BARS_SVG = TITLEBAR + divider + "".join(left) + name + "".join(tool) + stats + plan + buttons
+# nudge the entire right column down so its vertical center lines up with the
+# taller left portrait; divider + left bars stay where they are.
+RIGHT_SHIFT = 16
+right_col = f'<g transform="translate(0,{RIGHT_SHIFT})">{name}{"".join(tool)}{stats}{plan}{buttons}</g>'
+BARS_SVG = TITLEBAR + divider + "".join(left) + right_col
 
 # ---------- 4. assemble ----------
 # textLength pins each line to an exact pixel width so the layout is
@@ -348,7 +358,7 @@ CONTENT_STRIP = STYLE + BG + BARS_SVG          # slices below the art don't need
 def write_svg(fname, vx, vy, vw, vh, content):
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{vw}" height="{vh}" '
            f'viewBox="{vx} {vy} {vw} {vh}" '
-           f"font-family=\"Consolas, 'Fira Code', Menlo, monospace\">{content}</svg>")
+           f"font-family=\"'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace\">{content}</svg>")
     with open(fname, "w") as f:
         f.write(svg)
     print(f"{fname} written, {len(svg)/1024:.0f} KB")
