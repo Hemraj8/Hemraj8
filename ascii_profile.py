@@ -204,7 +204,7 @@ TITLEBAR = (
 )
 
 # ---- left: caption + "right now" bars under the portrait ----
-CAP = "not a stock avatar — me, rendered as 130×60 chars of .,-~:;=!*#$@"
+CAP = ""
 BARS = [("building", 90), ("learning", 65), ("sleeping", 15)]
 BAR_N = 46          # more segments = longer bars (proportions unchanged: fill is still pct% of BAR_N)
 PCT_X = ART_X + ART_W - 10   # percentage value sits ~10px left of the portrait edge, tight to the bar
