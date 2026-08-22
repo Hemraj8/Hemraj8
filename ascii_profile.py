@@ -35,7 +35,7 @@ try:
     print("stats:", STATS)
 except Exception as e:
     print("stats fallback:", e)
-    STATS = {"repos": 14, "stars": 3, "followers": 1, "joined": "June 2023"}
+    STATS = {"repos": 27, "stars": 3, "followers": 1, "joined": "June 2023"}
 
 # ---------- 1. read the BMP produced by sips (2x the char grid) ----------
 data = open("small.bmp", "rb").read()
@@ -238,9 +238,9 @@ name = (
     f'<g opacity="0">{fade(T_NAME)}'
     # medium weight so the name reads as a terminal title line, not a marketing
     # hero. No cursor here — the name stays clean and static.
-    f'<text x="{RX}" y="126" font-size="29" font-weight="500" letter-spacing="3">'
+    f'<text x="{RX}" y="126" font-size="31" font-weight="500" letter-spacing="3">'
     f'<tspan fill="#f0f3f6">HEMRAJ SODISETTI</tspan></text>'
-    f'<text x="{RX + 2}" y="158" font-size="14" letter-spacing="2.5">'
+    f'<text x="{RX + 2}" y="158" font-size="15" letter-spacing="2.5">'
     + '<tspan fill="#B08D57"> · </tspan>'.join(
         f'<tspan fill="#8b949e">{s}</tspan>' for s in ("SYSTEM ENGINEER", "BUILDER")
     )
@@ -258,13 +258,13 @@ tool = [
     f'<g opacity="0">{fade(T_NAME + 0.4)}'
     f'<rect x="{BX}" y="{BY}" width="{BW}" height="{BH}" rx="8" fill="none" stroke="#3a3a3a" stroke-width="1.6"/>'
     f'<rect x="{BX + 16}" y="{BY - 8}" width="108" height="16" fill="#000000"/>'
-    f'<text x="{BX + 22}" y="{BY + 4}" font-size="11" letter-spacing="1.5"><tspan fill="#B08D57">//</tspan><tspan fill="#6e7681"> TOOLCHAIN</tspan></text>'
+    f'<text x="{BX + 22}" y="{BY + 4}" font-size="12" letter-spacing="1.5"><tspan fill="#B08D57">//</tspan><tspan fill="#6e7681"> TOOLCHAIN</tspan></text>'
 ]
 for i, ic in enumerate(ICONS):
     cx = BX + 20 + (BW - 40) / len(ICONS) * (i + 0.5)
-    tool.append(icon(ic["d"], cx, BY + 48))
+    tool.append(icon(ic["d"], cx, BY + 48, size=27))
     tool.append(
-        f'<text x="{cx:.0f}" y="{BY + 88}" text-anchor="middle" font-size="8.5" '
+        f'<text x="{cx:.0f}" y="{BY + 89}" text-anchor="middle" font-size="9.5" '
         f'letter-spacing="0.5" fill="#6e7681">{escape(ic["label"])}</text>'
     )
 tool.append('</g>')
@@ -272,18 +272,18 @@ tool.append('</g>')
 # ---- github stats: header with divider + 2x2 dotted grid ----
 def stat(key, val, x, y, chars=27):
     n = max(chars - len(key) - len(str(val)) - 2, 2)
-    return (f'<text x="{x}" y="{y}" font-size="14.5">'
+    return (f'<text x="{x}" y="{y}" font-size="16">'
             f'<tspan fill="#B08D57">{escape(key)}</tspan>'
             f'<tspan fill="#2d333b"> {"." * n} </tspan>'
             f'<tspan fill="#e6edf3">{escape(str(val))}</tspan></text>')
 
-GC = RX + 232   # right stat column
+GC = RX + 240   # right stat column; leaves a clear gap at the larger font size
 stats = (
     f'<g opacity="0">{fade(T_NAME + 0.9)}'
-    f'<text x="{RX}" y="352" font-size="14.5" letter-spacing="1">'
+    f'<text x="{RX}" y="352" font-size="16" letter-spacing="1">'
     f'<tspan fill="#B08D57">&gt;</tspan><tspan fill="#e6edf3"> GITHUB STATS</tspan></text>'
     f'<line x1="{RX + 150}" y1="347" x2="{W - 16}" y2="347" stroke="#3a3a3a" stroke-width="1.3"/>'
-    f'{stat("Repos", STATS["repos"], RX, 394, chars=24)}{stat("Joined", STATS["joined"], GC, 394, chars=24)}'
+    f'{stat("Repos", STATS["repos"], RX, 394, chars=22)}{stat("Joined", STATS["joined"], GC, 394, chars=22)}'
     f'</g>'
 )
 
