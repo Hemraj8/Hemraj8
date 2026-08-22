@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="980" height="508" viewBox="0 0 980 508">
+  <defs>
+    <clipPath id="portrait-panel"><rect x="14" y="48" width="480" height="460" rx="0" /></clipPath>
+  </defs>
+  <image href="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile_top.svg?v=33" xlink:href="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile_top.svg?v=33" width="980" height="508" />
+  <image href="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile-video.gif?v=1" xlink:href="https://raw.githubusercontent.com/Hemraj8/Hemraj8/main/profile-video.gif?v=1" x="14" y="48" width="480" height="460" preserveAspectRatio="xMidYMid meet" clip-path="url(#portrait-panel)" />
+</svg>
