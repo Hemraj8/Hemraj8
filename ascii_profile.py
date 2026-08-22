@@ -10,6 +10,7 @@ Regenerate:  sips -z 120 260 avatar.png -s format bmp --out small.bmp
 """
 import json
 import os
+import re
 import struct
 import urllib.request
 from datetime import datetime
@@ -357,6 +358,9 @@ def write_svg(fname, vx, vy, vw, vh, content):
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{vw}" height="{vh}" '
            f'viewBox="{vx} {vy} {vw} {vh}" '
            f"font-family=\"'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace\">{content}</svg>")
+    # GitHub's image proxy does not consistently advance SVG fade animations.
+    # Keep the profile UI visible immediately; the video panel animates separately.
+    svg = re.sub(r'<animate\b[^>]*/>', '', svg).replace(' opacity="0"', ' opacity="1"')
     with open(fname, "w") as f:
         f.write(svg)
     print(f"{fname} written, {len(svg)/1024:.0f} KB")
