@@ -80,3 +80,48 @@ size or the plan/bars vertical positions can violate these — re-check both.
 **The one-sentence why**
 "I spread the right-hand sections to fill the column instead of shoving them
 down, so the layout balances top-to-bottom with no dead space under the buttons."
+
+---
+
+## TEDH intro video in the left panel + stale stats fix
+
+**What we added / changed**
+- Swapped the looping video in the card's left panel for the TEDH intro
+  (`tedh-intro-dark.mp4`, kept at `~/Documents/Claude/Projects/CLEAN/out/`).
+- New `banner/build_banner.sh` rebuilds `profile-video-banner.gif` in one
+  command. It replaces four throwaway scripts (Swift + Python) that only lived
+  in an old Codex folder and were never committed.
+- 12 frames per second instead of ~6, so the fast spin/bounce doesn't stutter.
+  File went from 3.5 MB to 1.9 MB anyway.
+- Video panel narrowed by 16px so the centre divider shows full-height again
+  (the old panel covered it, leaving a stub at the bottom).
+- Video background (near-black + faint dark-red dot grid) is crushed to pure
+  black so no box shows around the video.
+- Repos count in the card: 27 → 15 (the real number).
+
+**Tools / concepts involved (one line each)**
+- GIF: animated image that loops silently; GitHub autoplays it, unlike .mp4.
+- Headless Chrome: Chrome with no window, used to "screenshot" the SVG to PNG.
+- ffmpeg: command-line video tool; here it pastes video frames onto the card
+  and writes the GIF.
+- Palette (palettegen/paletteuse): a GIF can only hold 256 colours, so ffmpeg
+  picks the best 256 from the actual frames.
+- Opaque frames: no transparent pixels, because GitHub showed them as white specks.
+
+**The gotcha worth remembering**
+The GIF bakes the whole top half of the card (name, toolchain, stats) into
+every frame. The daily Action still updates `profile_top.svg`, but the README
+no longer shows that file — so the stats in the GIF freeze until it's rebuilt.
+That's why it said 27 repos long after it stopped being true.
+
+**To rebuild**
+```
+python3 ascii_profile.py                       # only if card text/stats changed
+sh banner/build_banner.sh ~/Documents/Claude/Projects/CLEAN/out/tedh-intro-dark.mp4
+```
+Then bump `?v=` on the GIF in README.md and push.
+
+**The one-sentence why**
+"GitHub won't autoplay video in a README, so I composite the video into the
+card as a looping GIF — and I scripted it so the stats baked into it can be
+refreshed with one command."

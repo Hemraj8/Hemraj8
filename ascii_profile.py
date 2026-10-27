@@ -36,7 +36,7 @@ try:
     print("stats:", STATS)
 except Exception as e:
     print("stats fallback:", e)
-    STATS = {"repos": 27, "stars": 3, "followers": 1, "joined": "June 2023"}
+    STATS = {"repos": 15, "stars": 3, "followers": 2, "joined": "June 2023"}
 
 # ---------- 1. read the BMP produced by sips (2x the char grid) ----------
 data = open("small.bmp", "rb").read()
