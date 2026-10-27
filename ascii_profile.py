@@ -38,6 +38,12 @@ except Exception as e:
     print("stats fallback:", e)
     STATS = {"repos": 15, "stars": 3, "followers": 2, "joined": "June 2023"}
 
+# The API above only counts public repos; the card shows every repo I own,
+# private ones included, which only a logged-in owner can see. Update by hand
+# from github.com/Hemraj8?tab=repositories (while logged in) when it changes.
+REPOS_TOTAL = 31
+STATS["repos"] = REPOS_TOTAL
+
 # ---------- 1. read the BMP produced by sips (2x the char grid) ----------
 data = open("small.bmp", "rb").read()
 off = struct.unpack("<I", data[10:14])[0]

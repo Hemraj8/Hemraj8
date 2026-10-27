@@ -125,3 +125,11 @@ Then bump `?v=` on the GIF in README.md and push.
 "GitHub won't autoplay video in a README, so I composite the video into the
 card as a looping GIF — and I scripted it so the stats baked into it can be
 refreshed with one command."
+
+### Follow-up: repo count includes private repos
+GitHub's API only reports *public* repos (15). The card now shows every repo I
+own, private included (31), set by hand as `REPOS_TOTAL` in `ascii_profile.py`
+because only a logged-in owner can see the private count. Organisation repos
+(TEDH-TECH) aren't included — they belong to the org, not my account.
+Visitors clicking through will only see the public 15; that's the tradeoff.
+**Why I'd say:** "The card counts everything I've built, not only what's public."
